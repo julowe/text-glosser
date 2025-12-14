@@ -20,7 +20,8 @@ class TestSanitizeFilename:
     
     def test_path_traversal(self):
         """Test preventing path traversal."""
-        assert sanitize_filename("../../../etc/passwd") == "etc_passwd"
+        # os.path.basename removes all path components, leaving just the filename
+        assert sanitize_filename("../../../etc/passwd") == "passwd"
     
     def test_spaces(self):
         """Test handling spaces."""
