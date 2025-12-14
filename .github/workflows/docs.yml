@@ -9,6 +9,8 @@ on:
 jobs:
   build-docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Need write for gh-pages deployment
 
     steps:
     - uses: actions/checkout@v4

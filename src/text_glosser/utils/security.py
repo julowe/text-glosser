@@ -13,8 +13,9 @@ from pathlib import Path
 
 # ISO 639 language code patterns
 ISO_639_1_PATTERN = re.compile(r'^[a-z]{2}$')
+# ISO 639-2 and 639-3 both use 3-letter codes with the same pattern
 ISO_639_2_PATTERN = re.compile(r'^[a-z]{3}$')
-ISO_639_3_PATTERN = re.compile(r'^[a-z]{3}$')
+ISO_639_3_PATTERN = ISO_639_2_PATTERN  # Same pattern as ISO 639-2
 
 
 def sanitize_filename(filename: str) -> str:
@@ -34,7 +35,7 @@ def sanitize_filename(filename: str) -> str:
     Examples
     --------
     >>> sanitize_filename("../../../etc/passwd")
-    'etc_passwd'
+    'passwd'
     >>> sanitize_filename("my file.txt")
     'my_file.txt'
     """
@@ -180,8 +181,9 @@ def sanitize_text_content(content: str, max_length: int = 10_000_000) -> str:
     # Remove any HTML tags
     content = re.sub(r'<[^>]+>', '', content)
     
-    # Remove any script-like patterns
-    content = re.sub(r'<script[^>]*>.*?</script>', '', content, flags=re.IGNORECASE | re.DOTALL)
+    # Remove any script-like patterns (handle various whitespace and attributes in closing tags)
+    # Use a more robust pattern that handles edge cases like </script attr> or </script \t\n>
+    content = re.sub(r'<script[^>]*>.*?</script[\s\S]*?>', '', content, flags=re.IGNORECASE | re.DOTALL)
     
     return content
 
