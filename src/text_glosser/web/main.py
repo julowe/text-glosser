@@ -189,8 +189,8 @@ def create_main_page():
                         retention_enabled.value = False
                         retention_input.disable()
 
-                retention_enabled.on("change", on_retention_toggle)
-                retention_input.on("change", on_retention_change)
+                retention_enabled.on_value_change(on_retention_toggle)
+                retention_input.on_value_change(on_retention_change)
 
         ui.separator()
 
@@ -211,15 +211,17 @@ def create_main_page():
                 # Create a container for the language group
                 with ui.row().classes("w-full items-center gap-2"):
                     # Master checkbox for the language group
-                    lang_checkbox = ui.checkbox(f"Select all {lang_display}", value=False)
+                    lang_checkbox = ui.checkbox(
+                        f"Select all {lang_display}", value=False
+                    )
                     language_checkboxes[lang_code] = {
                         "master": lang_checkbox,
                         "items": [],
                     }
 
-                with ui.expansion(f"Language: {lang_display}", icon="translate").classes(
-                    "w-full"
-                ) as expansion:
+                with ui.expansion(
+                    f"Language: {lang_display}", icon="translate"
+                ).classes("w-full") as expansion:
                     resource_checkboxes_for_lang = []
 
                     for res in resources:
@@ -284,10 +286,44 @@ def create_main_page():
 
             # File upload
             ui.markdown("### Upload Files")
+
+            def handle_upload(e):
+                """Handle file upload event."""
+                try:
+                    # e.name contains the filename
+                    # e.content contains file content as BytesIO object
+                    file_name = e.name
+                    file_content = e.content
+
+                    # Save uploaded file
+                    file_path = UPLOADS_DIR / sanitize_filename(file_name)
+                    with open(file_path, "wb") as f:
+                        f.write(file_content.read())
+
+                    # Read content as text
+                    content = read_file(str(file_path))
+
+                    # Create TextSource
+                    text_source = TextSource(
+                        id=str(uuid.uuid4()),
+                        name=file_name,
+                        content=content,
+                        source_type="file",
+                        original_path=str(file_path),
+                    )
+
+                    state["text_sources"].append(text_source)
+                    ui.notify(f"File added: {file_name}", type="positive")
+
+                except Exception as e:
+                    ui.notify(f"Error loading file: {e}", type="negative")
+                    import traceback
+                    traceback.print_exc()
+
             ui.upload(
-                label="Upload text files",
+                label="Select text files (auto-uploads on selection)",
                 multiple=True,
-                on_upload=lambda e: handle_file_upload(e, state),
+                on_upload=handle_upload,
             ).classes("w-full")
 
             # URL input
@@ -308,32 +344,6 @@ def create_main_page():
             "Process Text", on_click=lambda: process_text(state), color="primary"
         ).classes("text-lg px-8 py-4")
 
-
-def handle_file_upload(event, state):
-    """Handle file upload."""
-    try:
-        # Save uploaded file
-        file_path = UPLOADS_DIR / sanitize_filename(event.name)
-        with open(file_path, "wb") as f:
-            f.write(event.content.read())
-
-        # Read content
-        content = read_file(str(file_path))
-
-        # Create TextSource
-        text_source = TextSource(
-            id=str(uuid.uuid4()),
-            name=event.name,
-            content=content,
-            source_type="file",
-            original_path=str(file_path),
-        )
-
-        state["text_sources"].append(text_source)
-        ui.notify(f"Uploaded: {event.name}", type="positive")
-
-    except Exception as e:
-        ui.notify(f"Error uploading file: {e}", type="negative")
 
 
 def handle_url_input(urls_text, state):
