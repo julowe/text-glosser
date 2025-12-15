@@ -18,6 +18,7 @@ sphinxcontrib-napoleon>=0.7
 # Code quality and linting
 ruff>=0.1.0
 mypy>=1.7.0
+types-requests=>2.32.4.20250913
 
 # Additional development tools
 textual>=0.41.0  # For CLI development
