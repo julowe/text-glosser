@@ -65,10 +65,6 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
 
-    # random try from: https://stackoverflow.com/a/79695712
-    - name: Pull Docker image
-      run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
-
     - name: Run Trivy vulnerability scanner
       if: github.event_name != 'pull_request'
       uses: aquasecurity/trivy-action@master
