@@ -303,7 +303,7 @@ docker run -p 8080:8080 text-glosser:dev
 
 ### GitHub Actions Workflows
 
-1. **tests.yml**: Runs tests on Python 3.11 and 3.12, uploads coverage
+1. **tests.yml**: Runs tests on Python 3.12, uploads coverage to Codecov
 2. **docker-build.yml**: Builds and publishes Docker images, runs Trivy security scan
 3. **docs.yml**: Builds and deploys Sphinx documentation to GitHub Pages
 
