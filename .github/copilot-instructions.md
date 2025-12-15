@@ -103,7 +103,7 @@ PYTHONPATH=src pytest tests/unit/test_models.py   # Specific test
 ### Test Organization
 
 - **Unit tests**: `tests/unit/` - Test individual components
-- **Integration tests**: `tests/integration/` - Test component interactions (if added)
+- **Integration tests**: `tests/integration/` - Test component interactions (directory exists, tests to be added)
 - **Test naming**: `test_*.py` files, `test_*` functions, `Test*` classes
 
 ### Test Requirements
