@@ -4,6 +4,10 @@ A comprehensive text analysis and glossing application that provides
 word-by-word definitions and grammatical information using multiple
 linguistic dictionaries and resources.
 
+This project generates documentation using Sphinx.
+It is available through github pages:
+[Documentation](https://julowe.github.io/text-glosser/).
+
 ## 🚀 Quick Start
 
 ```bash
@@ -94,7 +98,8 @@ cd text-glosser
 pip install .
 ```
 
-See the [Installation Guide](docs/installation.rst) for detailed setup instructions,
+See the [Installation Guide](https://julowe.github.io/text-glosser/installation)
+for detailed setup instructions.
 
 ### CLI Usage
 
@@ -169,7 +174,8 @@ dharma: duty; righteousness; law
 
 ### CoNLL-U Format
 
-Standard Universal Dependencies CoNLL-U format with word definitions stored in the MISC field. Compatible with UD tools and parsers.
+Standard Universal Dependencies CoNLL-U format with word definitions stored in
+the MISC field. Compatible with UD tools and parsers.
 
 ```
 # sent_id = line_1
@@ -210,7 +216,8 @@ Standard Universal Dependencies CoNLL-U format with word definitions stored in t
 
 ## 🧪 Development
 
-For detailed development instructions, see the [Development Guide](docs/development.rst).
+For detailed development instructions, see the
+[Development Guide](https://julowe.github.io/text-glosser/development).
 
 ### Quick Development Setup
 
