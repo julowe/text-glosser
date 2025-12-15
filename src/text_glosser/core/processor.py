@@ -81,9 +81,18 @@ class TextProcessor:
         elif resource.format == DictionaryFormat.HANZIPY:
             # hanzipy will be used differently - import on demand
             try:
-                import hanzipy
+                # import hanzipy
+                # parser = hanzipy
 
-                parser = hanzipy
+                # import decomposer
+                # from hanzipy.decomposer import HanziDecomposer
+                # hDecomposer = HanziDecomposer()
+                # import dictionary
+                from hanzipy.dictionary import HanziDictionary
+
+                # hDictionary = HanziDictionary()
+                parser = HanziDictionary()  # hack to test exsting hacky code
+
             except ImportError:
                 print("hanzipy not available")
                 parser = None
@@ -151,7 +160,10 @@ class TextProcessor:
                     # Get character information
                     for char in word:
                         if "\u4e00" <= char <= "\u9fff":
-                            info = parser.decompose(char)
+                            # char_decomp = hDecomposer.decompose(char)
+                            # char_definition = hDictionary.definition_lookup(char)
+                            info = parser.definition_lookup(char)
+                            # info = parser.decompose(char)
                             if info:
                                 definition = f"Character: {char}, Decomposition: {info}"
                                 definitions.append(definition)
