@@ -287,18 +287,22 @@ def create_main_page():
             # File upload
             ui.markdown("### Upload Files")
 
-            def handle_upload(e):
-                """Handle file upload event."""
+            uploaded_files_list = ui.label("No files uploaded yet").classes(
+                "text-sm text-gray-600"
+            )
+
+            async def handle_upload(e):
+                """Handle file upload event - async version."""
                 try:
-                    # e.name contains the filename
-                    # e.content contains file content as BytesIO object
+                    # Read the uploaded file content
+                    # In NiceGUI, e.content contains the file bytes
+                    content_bytes = await e.content.read()
                     file_name = e.name
-                    file_content = e.content
 
                     # Save uploaded file
                     file_path = UPLOADS_DIR / sanitize_filename(file_name)
                     with open(file_path, "wb") as f:
-                        f.write(file_content.read())
+                        f.write(content_bytes)
 
                     # Read content as text
                     content = read_file(str(file_path))
@@ -313,16 +317,21 @@ def create_main_page():
                     )
 
                     state["text_sources"].append(text_source)
+                    num_files = len(state["text_sources"])
+                    uploaded_files_list.text = f"{num_files} file(s) uploaded"
                     ui.notify(f"File added: {file_name}", type="positive")
 
-                except Exception as e:
-                    ui.notify(f"Error loading file: {e}", type="negative")
+                except Exception as ex:
+                    error_msg = str(ex)
+                    ui.notify(f"Error loading file: {error_msg}", type="negative")
                     import traceback
+
                     traceback.print_exc()
 
             ui.upload(
                 label="Select text files (auto-uploads on selection)",
                 multiple=True,
+                auto_upload=True,
                 on_upload=handle_upload,
             ).classes("w-full")
 

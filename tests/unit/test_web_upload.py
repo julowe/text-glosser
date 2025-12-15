@@ -2,16 +2,16 @@
 Tests for web UI file upload functionality.
 """
 
-import io
 import tempfile
 import uuid
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 
-def test_file_upload_handler_with_deer_park_file():
+@pytest.mark.asyncio
+async def test_file_upload_handler_with_deer_park_file():
     """
     Test file upload handler with actual deer-park.txt file.
 
@@ -31,21 +31,25 @@ def test_file_upload_handler_with_deer_park_file():
     # Create a mock upload event that simulates NiceGUI's UploadEventArguments
     mock_event = MagicMock()
     mock_event.name = "deer-park.txt"
-    mock_event.content = io.BytesIO(file_content)
+
+    # Create an async mock for content.read()
+    mock_content = AsyncMock()
+    mock_content.read = AsyncMock(return_value=file_content)
+    mock_event.content = mock_content
 
     # Create a mock state object
     state = {"text_sources": []}
 
-    # Simulate the upload handler
+    # Simulate the upload handler (async version)
     try:
+        content_bytes = await mock_event.content.read()
         file_name = mock_event.name
-        file_content_io = mock_event.content
 
         # Save to temp file instead of actual uploads dir for testing
         with tempfile.NamedTemporaryFile(
             mode="wb", delete=False, suffix=".txt"
         ) as tmp_file:
-            tmp_file.write(file_content_io.read())
+            tmp_file.write(content_bytes)
             file_path = Path(tmp_file.name)
 
         # Read content as text
@@ -116,7 +120,8 @@ def test_file_upload_sanitizes_filename():
         # Just verify it's a safe filename (not testing exact output)
 
 
-def test_multiple_file_uploads():
+@pytest.mark.asyncio
+async def test_multiple_file_uploads():
     """
     Test handling multiple file uploads in sequence.
     """
@@ -136,16 +141,22 @@ def test_multiple_file_uploads():
     from text_glosser.core.ingestion import read_file
     from text_glosser.core.models import TextSource
 
-    for file_name, file_content in test_files:
+    for file_name, file_content_bytes in test_files:
         mock_event = MagicMock()
         mock_event.name = file_name
-        mock_event.content = io.BytesIO(file_content)
+
+        # Create async mock for content.read()
+        mock_content = AsyncMock()
+        mock_content.read = AsyncMock(return_value=file_content_bytes)
+        mock_event.content = mock_content
 
         # Simulate upload handler
+        content_bytes = await mock_event.content.read()
+
         with tempfile.NamedTemporaryFile(
             mode="wb", delete=False, suffix=".txt"
         ) as tmp_file:
-            tmp_file.write(mock_event.content.read())
+            tmp_file.write(content_bytes)
             file_path = Path(tmp_file.name)
 
         content = read_file(str(file_path))
