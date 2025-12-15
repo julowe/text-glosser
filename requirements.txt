@@ -1,0 +1,28 @@
+# Core dependencies
+fastapi>=0.104.0
+nicegui>=1.4.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.4.0
+pydantic-settings>=2.0.0
+
+# Dictionary and text processing
+pystardict>=0.8.1
+hanzipy>=0.1.1
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+lxml>=4.9.0
+
+# File handling and formats
+python-multipart>=0.0.6
+aiofiles>=23.2.0
+
+# Data formats
+conllu>=4.5.0
+
+# Security
+python-dotenv>=1.0.0
+
+# Utilities
+click>=8.1.0
+rich>=13.7.0
+pyyaml>=6.0.1

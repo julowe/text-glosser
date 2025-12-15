@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  text-glosser:
+    image: ghcr.io/julowe/text-glosser:latest
+    container_name: text-glosser
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persistent storage for user data
+      - text-glosser-data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATA_DIR=/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  text-glosser-data:
+    driver: local
