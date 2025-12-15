@@ -296,8 +296,8 @@ def create_main_page():
                 try:
                     # Read the uploaded file content
                     # In NiceGUI, e.content contains the file bytes
-                    content_bytes = await e.content.read()
-                    file_name = e.name
+                    content_bytes = await e.file.read()
+                    file_name = e.file.name
 
                     # Save uploaded file
                     file_path = UPLOADS_DIR / sanitize_filename(file_name)
