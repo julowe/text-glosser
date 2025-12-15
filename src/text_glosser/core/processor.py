@@ -229,7 +229,8 @@ class TextProcessor:
         # Add error for words without definitions
         if words_without_definitions:
             errors.append(
-                f"No definitions found for {len(words_without_definitions)} unique words: "
+                f"No definitions found for {len(words_without_definitions)}"
+                f" unique words: "
                 f"{', '.join(sorted(words_without_definitions)[:10])}"
                 + ("..." if len(words_without_definitions) > 10 else "")
             )

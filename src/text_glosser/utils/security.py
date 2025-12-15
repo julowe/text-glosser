@@ -183,8 +183,10 @@ def sanitize_text_content(content: str, max_length: int = 10_000_000) -> str:
     # Remove any HTML tags
     content = re.sub(r"<[^>]+>", "", content)
 
-    # Remove any script-like patterns (handle various whitespace and attributes in closing tags)
-    # Use a more robust pattern that handles edge cases like </script attr> or </script \t\n>
+    # Remove any script-like patterns
+    # (handle various whitespace and attributes in closing tags)
+    # Use a more robust pattern that handles edge cases like </script attr>
+    # or </script \t\n>
     content = re.sub(
         r"<script[^>]*>.*?</script[\s\S]*?>",
         "",
