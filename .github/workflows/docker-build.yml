@@ -46,8 +46,16 @@ jobs:
           type=semver,pattern={{major}}.{{minor}}
           type=sha
 
+    - name : Add SHORT_SHA Environment Variable
+      id   : short-sha
+      shell: bash
+      run  : echo "SHORT_SHA=sha-`git rev-parse --short HEAD`" >> $GITHUB_ENV
+
+    - name: Create annotation for debug message of SHORT_SHA
+      run: echo "::debug::SHORT_SHA is ${{ env.SHORT_SHA }}"
+
     - name: Create annotation for debug message of tags
-      run: echo "::debug::${{ steps.meta.outputs.tags }}"
+      run: echo "::debug::Extracted tags are ${{ steps.meta.outputs.tags }}"
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -59,13 +67,13 @@ jobs:
 
     # random try from: https://stackoverflow.com/a/79695712
     - name: Pull Docker image
-      run: docker pull ${{ steps.meta.outputs.tags }}
+      run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
 
     - name: Run Trivy vulnerability scanner
       if: github.event_name != 'pull_request'
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{ steps.meta.outputs.tags }}
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
         format: 'sarif'
         output: 'trivy-results.sarif'
 
