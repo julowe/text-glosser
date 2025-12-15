@@ -43,69 +43,77 @@ class ResourceRegistry:
         # StarDict - Monier-Williams Sanskrit-English
         mw_path = self.resources_dir / "sa" / "monier-williams-cologne"
         if mw_path.exists():
-            self.register_resource(DictionaryResource(
-                id="mw-sanskrit-english",
-                name="Monier-Williams Sanskrit-English Dictionary (Cologne)",
-                format=DictionaryFormat.STARDICT,
-                resource_type=ResourceType.DICTIONARY,
-                primary_language="sa",
-                secondary_languages=["en"],
-                file_paths=[
-                    str(mw_path / "mw-cologne.ifo"),
-                    str(mw_path / "mw-cologne.idx"),
-                    str(mw_path / "mw-cologne.dict.dz"),
-                ],
-                source_url="https://www.sanskrit-lexicon.uni-koeln.de/",
-                is_user_provided=False
-            ))
+            self.register_resource(
+                DictionaryResource(
+                    id="mw-sanskrit-english",
+                    name="Monier-Williams Sanskrit-English Dictionary (Cologne)",
+                    format=DictionaryFormat.STARDICT,
+                    resource_type=ResourceType.DICTIONARY,
+                    primary_language="sa",
+                    secondary_languages=["en"],
+                    file_paths=[
+                        str(mw_path / "mw-cologne.ifo"),
+                        str(mw_path / "mw-cologne.idx"),
+                        str(mw_path / "mw-cologne.dict.dz"),
+                    ],
+                    source_url="https://www.sanskrit-lexicon.uni-koeln.de/",
+                    is_user_provided=False,
+                )
+            )
 
         # StarDict - Lane's Arabic-English Lexicon
         lane_path = self.resources_dir / "ar" / "lane-lexicon"
         if lane_path.exists():
-            self.register_resource(DictionaryResource(
-                id="lane-arabic-english",
-                name="Lane's Arabic-English Lexicon",
-                format=DictionaryFormat.STARDICT,
-                resource_type=ResourceType.DICTIONARY,
-                primary_language="ar",
-                secondary_languages=["en"],
-                file_paths=[
-                    str(lane_path / "Lane-Arabic-English-Lexicon.ifo"),
-                    str(lane_path / "Lane-Arabic-English-Lexicon.idx"),
-                    str(lane_path / "Lane-Arabic-English-Lexicon.dict.dz"),
-                ],
-                is_user_provided=False
-            ))
+            self.register_resource(
+                DictionaryResource(
+                    id="lane-arabic-english",
+                    name="Lane's Arabic-English Lexicon",
+                    format=DictionaryFormat.STARDICT,
+                    resource_type=ResourceType.DICTIONARY,
+                    primary_language="ar",
+                    secondary_languages=["en"],
+                    file_paths=[
+                        str(lane_path / "Lane-Arabic-English-Lexicon.ifo"),
+                        str(lane_path / "Lane-Arabic-English-Lexicon.idx"),
+                        str(lane_path / "Lane-Arabic-English-Lexicon.dict.dz"),
+                    ],
+                    is_user_provided=False,
+                )
+            )
 
         # StarDict - Salmone's Arabic-English Lexicon
         salmone_path = self.resources_dir / "ar" / "salmone-lexicon"
         if salmone_path.exists():
-            self.register_resource(DictionaryResource(
-                id="salmone-arabic-english",
-                name="Salmone's Arabic-English Lexicon",
-                format=DictionaryFormat.STARDICT,
-                resource_type=ResourceType.DICTIONARY,
-                primary_language="ar",
-                secondary_languages=["en"],
-                file_paths=[
-                    str(salmone_path / "Salmone-Ara-Eng-Lexicon.ifo"),
-                    str(salmone_path / "Salmone-Ara-Eng-Lexicon.idx"),
-                    str(salmone_path / "Salmone-Ara-Eng-Lexicon.dict.dz"),
-                ],
-                is_user_provided=False
-            ))
+            self.register_resource(
+                DictionaryResource(
+                    id="salmone-arabic-english",
+                    name="Salmone's Arabic-English Lexicon",
+                    format=DictionaryFormat.STARDICT,
+                    resource_type=ResourceType.DICTIONARY,
+                    primary_language="ar",
+                    secondary_languages=["en"],
+                    file_paths=[
+                        str(salmone_path / "Salmone-Ara-Eng-Lexicon.ifo"),
+                        str(salmone_path / "Salmone-Ara-Eng-Lexicon.idx"),
+                        str(salmone_path / "Salmone-Ara-Eng-Lexicon.dict.dz"),
+                    ],
+                    is_user_provided=False,
+                )
+            )
 
         # hanzipy library
-        self.register_resource(DictionaryResource(
-            id="hanzipy-chinese",
-            name="HanziPy - Chinese Character Information",
-            format=DictionaryFormat.HANZIPY,
-            resource_type=ResourceType.LIBRARY,
-            primary_language="zh",
-            secondary_languages=["en"],
-            is_user_provided=False,
-            source_url="https://pypi.org/project/hanzipy/"
-        ))
+        self.register_resource(
+            DictionaryResource(
+                id="hanzipy-chinese",
+                name="HanziPy - Chinese Character Information",
+                format=DictionaryFormat.HANZIPY,
+                resource_type=ResourceType.LIBRARY,
+                primary_language="zh",
+                secondary_languages=["en"],
+                is_user_provided=False,
+                source_url="https://pypi.org/project/hanzipy/",
+            )
+        )
 
     def register_resource(self, resource: DictionaryResource):
         """
@@ -149,7 +157,8 @@ class ResourceRegistry:
             List of resources for the language
         """
         return [
-            res for res in self.resources.values()
+            res
+            for res in self.resources.values()
             if res.primary_language == language_code
         ]
 

@@ -32,7 +32,7 @@ class TestLanguageCode:
         lang = LanguageCode(
             set1="sa",
             set2=["san"],
-            set3=["cls", "vsn"]
+            set3=["cls", "vsn"],
         )
         assert lang.set1 == "sa"
         assert "san" in lang.set2
@@ -51,7 +51,7 @@ class TestDictionaryResource:
             resource_type=ResourceType.DICTIONARY,
             primary_language="en",
             secondary_languages=["fr"],
-            file_paths=["/path/to/dict.ifo"]
+            file_paths=["/path/to/dict.ifo"],
         )
         assert res.id == "test-dict"
         assert res.format == DictionaryFormat.STARDICT
@@ -65,7 +65,7 @@ class TestDictionaryResource:
             format=DictionaryFormat.MDICT,
             resource_type=ResourceType.DICTIONARY,
             primary_language="zh",
-            is_user_provided=True
+            is_user_provided=True,
         )
         assert res.is_user_provided is True
 
@@ -80,7 +80,7 @@ class TestTextSource:
             name="test.txt",
             content="Hello, world!",
             source_type="file",
-            original_path="/path/to/test.txt"
+            original_path="/path/to/test.txt",
         )
         assert source.source_type == "file"
         assert source.content == "Hello, world!"
@@ -92,7 +92,7 @@ class TestTextSource:
             name="https://example.com",
             content="Web content",
             source_type="url",
-            original_path="https://example.com"
+            original_path="https://example.com",
         )
         assert source.source_type == "url"
 
@@ -105,7 +105,7 @@ class TestWordDefinition:
         word_def = WordDefinition(
             word="karma",
             definitions=["action", "deed"],
-            source_dict="test-dict"
+            source_dict="test-dict",
         )
         assert word_def.word == "karma"
         assert len(word_def.definitions) == 2
@@ -117,7 +117,7 @@ class TestWordDefinition:
             word="test",
             definitions=["definition"],
             source_dict="dict-id",
-            grammatical_info={"pos": "noun", "gender": "neuter"}
+            grammatical_info={"pos": "noun", "gender": "neuter"},
         )
         assert word_def.grammatical_info["pos"] == "noun"
 
@@ -130,11 +130,11 @@ class TestLineAnalysis:
         word_def = WordDefinition(
             word="test",
             definitions=["def"],
-            source_dict="dict-1"
+            source_dict="dict-1",
         )
         line = LineAnalysis(
             line_number=1,
-            words=[word_def]
+            words=[word_def],
         )
         assert line.line_number == 1
         assert len(line.words) == 1
@@ -148,7 +148,7 @@ class TestTextAnalysis:
         word_def = WordDefinition(
             word="test",
             definitions=["def"],
-            source_dict="dict-1"
+            source_dict="dict-1",
         )
         line = LineAnalysis(line_number=1, words=[word_def])
 
@@ -158,7 +158,7 @@ class TestTextAnalysis:
             total_lines=1,
             total_words=1,
             dictionaries_used=["dict-1"],
-            lines=[line]
+            lines=[line],
         )
 
         assert analysis.source_name == "test.txt"
@@ -176,14 +176,14 @@ class TestSessionConfig:
             id="src-1",
             name="test.txt",
             content="content",
-            source_type="file"
+            source_type="file",
         )
 
         session = SessionConfig(
             session_id="test-session-123",
             text_sources=[source],
             selected_resources=["dict-1", "dict-2"],
-            retention_days=180
+            retention_days=180,
         )
 
         assert session.session_id == "test-session-123"
@@ -197,7 +197,7 @@ class TestSessionConfig:
             session_id="test-session",
             text_sources=[],
             selected_resources=[],
-            retention_days=None
+            retention_days=None,
         )
         assert session.retention_days is None
 
@@ -208,5 +208,5 @@ class TestSessionConfig:
                 session_id="test",
                 text_sources=[],
                 selected_resources=[],
-                retention_days=400
+                retention_days=400,
             )

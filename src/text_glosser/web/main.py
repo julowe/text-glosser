@@ -61,7 +61,7 @@ async def get_dictionaries(language: str | None = None):
                 "primary_language": res.primary_language,
                 "secondary_languages": res.secondary_languages,
                 "is_user_provided": res.is_user_provided,
-                "accessible": registry.verify_resource_accessible(res.id)
+                "accessible": registry.verify_resource_accessible(res.id),
             }
             for res in resources
         ]
@@ -74,9 +74,7 @@ async def get_languages():
     languages = registry.get_all_languages()
 
     # Prioritized languages list
-    priority_languages = [
-        "ar", "en", "fr", "de", "el", "he", "la", "sa", "zh"
-    ]
+    priority_languages = ["ar", "en", "fr", "de", "el", "he", "la", "sa", "zh"]
 
     # Separate into priority and other
     priority = [lang for lang in priority_languages if lang in languages]
@@ -85,7 +83,7 @@ async def get_languages():
     return {
         "priority": priority,
         "other": other,
-        "all": priority + other
+        "all": priority + other,
     }
 
 
@@ -95,34 +93,36 @@ def create_main_page():
 
     # State management
     state = {
-        'selected_resources': [],
-        'uploaded_files': [],
-        'retention_days': 180,
-        'enable_retention': True,
-        'session_id': None,
-        'text_sources': []
+        "selected_resources": [],
+        "uploaded_files": [],
+        "retention_days": 180,
+        "enable_retention": True,
+        "session_id": None,
+        "text_sources": [],
     }
 
-    with ui.column().classes('w-full max-w-6xl mx-auto p-4'):
+    with ui.column().classes("w-full max-w-6xl mx-auto p-4"):
         # Header
-        ui.markdown('# Text Glosser')
-        ui.markdown('Analyze text using linguistic dictionaries and resources')
+        ui.markdown("# Text Glosser")
+        ui.markdown("Analyze text using linguistic dictionaries and resources")
 
         ui.separator()
 
         # Session settings
-        with ui.card().classes('w-full'):
-            ui.markdown('## Session Settings')
+        with ui.card().classes("w-full"):
+            ui.markdown("## Session Settings")
 
-            with ui.row().classes('w-full items-center gap-4'):
-                retention_enabled = ui.checkbox('Delete my data after inactive days:', value=True)
+            with ui.row().classes("w-full items-center gap-4"):
+                retention_enabled = ui.checkbox(
+                    "Delete my data after inactive days:", value=True
+                )
                 retention_input = ui.number(
-                    'Days',
+                    "Days",
                     value=180,
                     min=0,
                     max=365,
-                    step=1
-                ).classes('w-32')
+                    step=1,
+                ).classes("w-32")
 
                 def on_retention_toggle(e):
                     if not e.value:
@@ -140,14 +140,14 @@ def create_main_page():
                         retention_enabled.value = False
                         retention_input.disable()
 
-                retention_enabled.on('change', on_retention_toggle)
-                retention_input.on('change', on_retention_change)
+                retention_enabled.on("change", on_retention_toggle)
+                retention_input.on("change", on_retention_change)
 
         ui.separator()
 
         # Dictionary selection
-        with ui.card().classes('w-full'):
-            ui.markdown('## Select Dictionaries and Resources')
+        with ui.card().classes("w-full"):
+            ui.markdown("## Select Dictionaries and Resources")
 
             # Group by language
             grouped = registry.get_resources_grouped_by_language()
@@ -159,31 +159,37 @@ def create_main_page():
                 resources = grouped[lang_code]
 
                 # Create a container for the language group
-                with ui.row().classes('w-full items-center gap-2'):
+                with ui.row().classes("w-full items-center gap-2"):
                     # Master checkbox for the language group
-                    lang_checkbox = ui.checkbox(f'Select all {lang_code}', value=False)
-                    language_checkboxes[lang_code] = {'master': lang_checkbox, 'items': []}
+                    lang_checkbox = ui.checkbox(f"Select all {lang_code}", value=False)
+                    language_checkboxes[lang_code] = {
+                        "master": lang_checkbox,
+                        "items": [],
+                    }
 
-                with ui.expansion(f'Language: {lang_code}', icon='translate').classes('w-full') as expansion:
+                with ui.expansion(f"Language: {lang_code}", icon="translate").classes(
+                    "w-full"
+                ) as expansion:
                     resource_checkboxes_for_lang = []
-                    
+
                     for res in resources:
                         accessible = registry.verify_resource_accessible(res.id)
-                        prefix = '[User]' if res.is_user_provided else '[Built-in]'
+                        prefix = "[User]" if res.is_user_provided else "[Built-in]"
 
                         checkbox = ui.checkbox(
-                            f'{prefix} {res.name} ({res.format.value})',
-                            value=False
+                            f"{prefix} {res.name} ({res.format.value})", value=False
                         )
 
                         if not accessible:
                             checkbox.disable()
-                            ui.label('⚠️ Not accessible').classes('text-red-500 text-sm')
+                            ui.label("⚠️ Not accessible").classes("text-red-500 text-sm")
 
                         selected_resources_list.append((checkbox, res.id))
                         resource_checkboxes_for_lang.append(checkbox)
-                    
-                    language_checkboxes[lang_code]['items'] = resource_checkboxes_for_lang
+
+                    language_checkboxes[lang_code]["items"] = (
+                        resource_checkboxes_for_lang
+                    )
 
                 # Connect master checkbox to expand and select all items
                 def create_lang_handler(lang_code, expansion_widget, checkboxes):
@@ -193,56 +199,62 @@ def create_main_page():
                             expansion_widget.open()
                         # Set all child checkboxes to the same value
                         for cb in checkboxes:
-                            if not cb.props.get('disabled'):  # Only check enabled checkboxes
+                            if not cb.props.get(
+                                "disabled"
+                            ):  # Only check enabled checkboxes
                                 cb.value = e.value
+
                     return on_lang_check
 
-                lang_checkbox.on('change', create_lang_handler(
-                    lang_code, 
-                    expansion,
-                    resource_checkboxes_for_lang
-                ))
+                lang_checkbox.on(
+                    "change",
+                    create_lang_handler(
+                        lang_code,
+                        expansion,
+                        resource_checkboxes_for_lang,
+                    ),
+                )
 
-            state['resource_checkboxes'] = selected_resources_list
-            state['language_checkboxes'] = language_checkboxes
+            state["resource_checkboxes"] = selected_resources_list
+            state["language_checkboxes"] = language_checkboxes
 
             # Upload dictionaries button
-            ui.button('Upload Dictionaries/Resources', on_click=lambda: ui.notify('Dictionary upload coming soon!')).classes('mt-4')
+            ui.button(
+                "Upload Dictionaries/Resources",
+                on_click=lambda: ui.notify("Dictionary upload coming soon!"),
+            ).classes("mt-4")
 
         ui.separator()
 
         # Text source input
-        with ui.card().classes('w-full'):
-            ui.markdown('## Text Sources')
+        with ui.card().classes("w-full"):
+            ui.markdown("## Text Sources")
 
             # File upload
-            ui.markdown('### Upload Files')
+            ui.markdown("### Upload Files")
             ui.upload(
-                label='Upload text files',
+                label="Upload text files",
                 multiple=True,
-                on_upload=lambda e: handle_file_upload(e, state)
-            ).classes('w-full')
+                on_upload=lambda e: handle_file_upload(e, state),
+            ).classes("w-full")
 
             # URL input
-            ui.markdown('### Or Enter URLs')
+            ui.markdown("### Or Enter URLs")
             url_input = ui.textarea(
-                'URLs (one per line)',
-                placeholder='https://example.com/text1\nhttps://example.com/text2'
-            ).classes('w-full')
+                "URLs (one per line)",
+                placeholder="https://example.com/text1\nhttps://example.com/text2",
+            ).classes("w-full")
 
             ui.button(
-                'Add URLs',
-                on_click=lambda: handle_url_input(url_input.value, state)
+                "Add URLs", on_click=lambda: handle_url_input(url_input.value, state)
             )
 
         # Process button
         ui.separator()
 
         ui.button(
-            'Process Text',
-            on_click=lambda: process_text(state),
-            color='primary'
-        ).classes('text-lg px-8 py-4')
+            "Process Text", on_click=lambda: process_text(state), color="primary"
+        ).classes("text-lg px-8 py-4")
 
 
 def handle_file_upload(event, state):
@@ -250,7 +262,7 @@ def handle_file_upload(event, state):
     try:
         # Save uploaded file
         file_path = UPLOADS_DIR / sanitize_filename(event.name)
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             f.write(event.content.read())
 
         # Read content
@@ -261,31 +273,31 @@ def handle_file_upload(event, state):
             id=str(uuid.uuid4()),
             name=event.name,
             content=content,
-            source_type='file',
-            original_path=str(file_path)
+            source_type="file",
+            original_path=str(file_path),
         )
 
-        state['text_sources'].append(text_source)
-        ui.notify(f'Uploaded: {event.name}', type='positive')
+        state["text_sources"].append(text_source)
+        ui.notify(f"Uploaded: {event.name}", type="positive")
 
     except Exception as e:
-        ui.notify(f'Error uploading file: {e}', type='negative')
+        ui.notify(f"Error uploading file: {e}", type="negative")
 
 
 def handle_url_input(urls_text, state):
     """Handle URL input."""
     if not urls_text:
-        ui.notify('Please enter at least one URL', type='warning')
+        ui.notify("Please enter at least one URL", type="warning")
         return
 
-    urls = [url.strip() for url in urls_text.split('\n') if url.strip()]
+    urls = [url.strip() for url in urls_text.split("\n") if url.strip()]
 
     for url in urls:
         try:
             # Validate and fetch
             clean_url = sanitize_url(url)
             if not clean_url:
-                ui.notify(f'Invalid URL: {url}', type='negative')
+                ui.notify(f"Invalid URL: {url}", type="negative")
                 continue
 
             content = fetch_url(clean_url)
@@ -295,44 +307,45 @@ def handle_url_input(urls_text, state):
                 id=str(uuid.uuid4()),
                 name=url,
                 content=content,
-                source_type='url',
-                original_path=url
+                source_type="url",
+                original_path=url,
             )
 
-            state['text_sources'].append(text_source)
-            ui.notify(f'Added URL: {url}', type='positive')
+            state["text_sources"].append(text_source)
+            ui.notify(f"Added URL: {url}", type="positive")
 
         except Exception as e:
-            ui.notify(f'Error fetching {url}: {e}', type='negative')
+            ui.notify(f"Error fetching {url}: {e}", type="negative")
 
 
 def process_text(state):
     """Process text with selected resources."""
     # Get selected resources
     selected_resources = [
-        res_id for checkbox, res_id in state.get('resource_checkboxes', [])
+        res_id
+        for checkbox, res_id in state.get("resource_checkboxes", [])
         if checkbox.value
     ]
 
     if not selected_resources:
-        ui.notify('Please select at least one dictionary/resource', type='warning')
+        ui.notify("Please select at least one dictionary/resource", type="warning")
         return
 
-    if not state.get('text_sources'):
-        ui.notify('Please upload files or enter URLs', type='warning')
+    if not state.get("text_sources"):
+        ui.notify("Please upload files or enter URLs", type="warning")
         return
 
     try:
         # Create session
         session = session_manager.create_session(
-            text_sources=state['text_sources'],
+            text_sources=state["text_sources"],
             selected_resources=selected_resources,
-            retention_days=state.get('retention_days')
+            retention_days=state.get("retention_days"),
         )
 
         # Process each text source
         results = []
-        for text_source in state['text_sources']:
+        for text_source in state["text_sources"]:
             analysis = processor.analyze_text(text_source, selected_resources)
             results.append(analysis)
 
@@ -341,65 +354,67 @@ def process_text(state):
         output_dir.mkdir(parents=True, exist_ok=True)
 
         for i, analysis in enumerate(results):
-            base_filename = Path(state['text_sources'][i].name).stem
+            base_filename = Path(state["text_sources"][i].name).stem
             export_all_formats(analysis, str(output_dir), base_filename)
 
-        ui.notify(f'Processing complete! Session ID: {session.session_id}', type='positive')
+        ui.notify(
+            f"Processing complete! Session ID: {session.session_id}", type="positive"
+        )
 
         # Navigate to results page
-        ui.navigate.to(f'/results/{session.session_id}')
+        ui.navigate.to(f"/results/{session.session_id}")
 
     except Exception as e:
-        ui.notify(f'Error processing text: {e}', type='negative')
+        ui.notify(f"Error processing text: {e}", type="negative")
         import traceback
+
         traceback.print_exc()
 
 
-@ui.page('/')
+@ui.page("/")
 def index():
     """Main page route."""
     create_main_page()
 
 
-@ui.page('/results/{session_id}')
+@ui.page("/results/{session_id}")
 def results_page(session_id: str):
     """Results page."""
     session_id = sanitize_session_id(session_id)
     if not session_id:
-        ui.label('Invalid session ID')
+        ui.label("Invalid session ID")
         return
 
     session = session_manager.get_session(session_id)
     if not session:
-        ui.label('Session not found')
+        ui.label("Session not found")
         return
 
-    with ui.column().classes('w-full max-w-6xl mx-auto p-4'):
-        ui.markdown(f'# Results - Session {session_id}')
+    with ui.column().classes("w-full max-w-6xl mx-auto p-4"):
+        ui.markdown(f"# Results - Session {session_id}")
 
-        ui.button('Back to Home', on_click=lambda: ui.navigate.to('/')).classes('mb-4')
+        ui.button("Back to Home", on_click=lambda: ui.navigate.to("/")).classes("mb-4")
 
         # Show results
         results_dir = RESULTS_DIR / session_id
         if results_dir.exists():
-            files = list(results_dir.glob('*'))
+            files = list(results_dir.glob("*"))
 
-            ui.markdown(f'## Files ({len(files)})')
+            ui.markdown(f"## Files ({len(files)})")
 
             for file_path in files:
-                with ui.row().classes('items-center gap-2'):
+                with ui.row().classes("items-center gap-2"):
                     ui.label(file_path.name)
                     ui.button(
-                        'Download',
-                        on_click=lambda fp=file_path: ui.download(str(fp))
+                        "Download", on_click=lambda fp=file_path: ui.download(str(fp))
                     )
 
         # Delete session button
         ui.separator()
         ui.button(
-            'Delete Session Data',
+            "Delete Session Data",
             on_click=lambda: delete_session(session_id),
-            color='red'
+            color="red",
         )
 
 
@@ -413,16 +428,16 @@ def delete_session(session_id: str):
         if results_dir.exists():
             shutil.rmtree(results_dir)
 
-        ui.notify('Session deleted', type='positive')
-        ui.navigate.to('/')
+        ui.notify("Session deleted", type="positive")
+        ui.navigate.to("/")
 
     except Exception as e:
-        ui.notify(f'Error deleting session: {e}', type='negative')
+        ui.notify(f"Error deleting session: {e}", type="negative")
 
 
 # Initialize NiceGUI with FastAPI
 ui.run_with(
     app,
-    storage_secret='change-this-to-a-random-secret-key-in-production',
-    title='Text Glosser'
+    storage_secret="change-this-to-a-random-secret-key-in-production",
+    title="Text Glosser",
 )

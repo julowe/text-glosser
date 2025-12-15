@@ -73,16 +73,16 @@ class SessionManager:
         """Load all sessions from disk."""
         for session_file in self.data_dir.glob("*.json"):
             try:
-                with open(session_file, encoding='utf-8') as f:
+                with open(session_file, encoding="utf-8") as f:
                     data = json.load(f)
 
                 # Parse dates
-                data['created_at'] = datetime.fromisoformat(data['created_at'])
-                data['last_accessed'] = datetime.fromisoformat(data['last_accessed'])
+                data["created_at"] = datetime.fromisoformat(data["created_at"])
+                data["last_accessed"] = datetime.fromisoformat(data["last_accessed"])
 
                 # Parse text sources
-                data['text_sources'] = [
-                    TextSource(**src) for src in data['text_sources']
+                data["text_sources"] = [
+                    TextSource(**src) for src in data["text_sources"]
                 ]
 
                 session = SessionConfig(**data)
@@ -94,7 +94,7 @@ class SessionManager:
         self,
         text_sources: list[TextSource],
         selected_resources: list[str],
-        retention_days: int | None = 180
+        retention_days: int | None = 180,
     ) -> SessionConfig:
         """
         Create a new session.
@@ -119,7 +119,7 @@ class SessionManager:
             session_id=session_id,
             text_sources=text_sources,
             selected_resources=selected_resources,
-            retention_days=retention_days
+            retention_days=retention_days,
         )
 
         self.sessions[session_id] = session
@@ -163,24 +163,24 @@ class SessionManager:
 
         # Convert to dict for JSON serialization
         data = {
-            'session_id': session.session_id,
-            'text_sources': [
+            "session_id": session.session_id,
+            "text_sources": [
                 {
-                    'id': src.id,
-                    'name': src.name,
-                    'content': src.content,
-                    'source_type': src.source_type,
-                    'original_path': src.original_path
+                    "id": src.id,
+                    "name": src.name,
+                    "content": src.content,
+                    "source_type": src.source_type,
+                    "original_path": src.original_path,
                 }
                 for src in session.text_sources
             ],
-            'selected_resources': session.selected_resources,
-            'retention_days': session.retention_days,
-            'created_at': session.created_at.isoformat(),
-            'last_accessed': session.last_accessed.isoformat()
+            "selected_resources": session.selected_resources,
+            "retention_days": session.retention_days,
+            "created_at": session.created_at.isoformat(),
+            "last_accessed": session.last_accessed.isoformat(),
         }
 
-        with open(session_path, 'w', encoding='utf-8') as f:
+        with open(session_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
     def delete_session(self, session_id: str) -> bool:
@@ -235,9 +235,7 @@ class SessionManager:
             self.delete_session(session_id)
 
     def update_session_sources(
-        self,
-        session_id: str,
-        text_sources: list[TextSource]
+        self, session_id: str, text_sources: list[TextSource]
     ) -> bool:
         """
         Update text sources for a session.
@@ -265,9 +263,7 @@ class SessionManager:
         return True
 
     def update_session_resources(
-        self,
-        session_id: str,
-        selected_resources: list[str]
+        self, session_id: str, selected_resources: list[str]
     ) -> bool:
         """
         Update selected resources for a session.

@@ -79,7 +79,7 @@ def format_markdown(analysis: TextAnalysis) -> str:
 def format_json(
     analysis: TextAnalysis,
     config: SessionConfig = None,
-    include_config: bool = True
+    include_config: bool = True,
 ) -> str:
     """
     Format analysis results as JSON.
@@ -113,23 +113,23 @@ def format_json(
             "total_words": analysis.total_words,
             "dictionaries_used": analysis.dictionaries_used,
             "errors": analysis.errors,
-            "timestamp": analysis.timestamp.isoformat()
+            "timestamp": analysis.timestamp.isoformat(),
         },
-        "lines": []
+        "lines": [],
     }
 
     # Add line-by-line analysis
     for line_analysis in analysis.lines:
         line_data = {
             "line_number": line_analysis.line_number,
-            "words": []
+            "words": [],
         }
 
         for word_def in line_analysis.words:
             word_data = {
                 "word": word_def.word,
                 "definitions": word_def.definitions,
-                "source_dict": word_def.source_dict
+                "source_dict": word_def.source_dict,
             }
             if word_def.grammatical_info:
                 word_data["grammatical_info"] = word_def.grammatical_info
@@ -147,12 +147,12 @@ def format_json(
                     "id": src.id,
                     "name": src.name,
                     "source_type": src.source_type,
-                    "original_path": src.original_path
+                    "original_path": src.original_path,
                 }
                 for src in config.text_sources
             ],
             "selected_resources": config.selected_resources,
-            "created_at": config.created_at.isoformat()
+            "created_at": config.created_at.isoformat(),
         }
 
     return json.dumps(output, indent=2, ensure_ascii=False)
@@ -220,22 +220,26 @@ def format_conllu(analysis: TextAnalysis) -> str:
             deps = "_"  # Unknown
 
             # Put definitions in MISC field
-            definitions_str = "|".join(word_def.definitions).replace("\t", " ").replace("\n", " ")
+            definitions_str = (
+                "|".join(word_def.definitions).replace("\t", " ").replace("\n", " ")
+            )
             misc = f"Definitions={definitions_str}|SourceDict={word_def.source_dict}"
 
             # Create CoNLL-U line
-            conllu_line = "\t".join([
-                str(word_id),
-                form,
-                lemma,
-                upos,
-                xpos,
-                feats,
-                head,
-                deprel,
-                deps,
-                misc
-            ])
+            conllu_line = "\t".join(
+                [
+                    str(word_id),
+                    form,
+                    lemma,
+                    upos,
+                    xpos,
+                    feats,
+                    head,
+                    deprel,
+                    deps,
+                    misc,
+                ]
+            )
 
             lines.append(conllu_line)
             word_id += 1
@@ -250,7 +254,7 @@ def export_all_formats(
     analysis: TextAnalysis,
     output_dir: str,
     base_filename: str,
-    config: SessionConfig = None
+    config: SessionConfig = None,
 ) -> dict[str, str]:
     """
     Export analysis in all formats.
@@ -287,22 +291,22 @@ def export_all_formats(
     # Export Markdown
     md_path = output_path / f"{base_filename}.md"
     md_content = format_markdown(analysis)
-    with open(md_path, 'w', encoding='utf-8') as f:
+    with open(md_path, "w", encoding="utf-8") as f:
         f.write(md_content)
-    file_paths['markdown'] = str(md_path)
+    file_paths["markdown"] = str(md_path)
 
     # Export JSON
     json_path = output_path / f"{base_filename}.json"
     json_content = format_json(analysis, config=config)
-    with open(json_path, 'w', encoding='utf-8') as f:
+    with open(json_path, "w", encoding="utf-8") as f:
         f.write(json_content)
-    file_paths['json'] = str(json_path)
+    file_paths["json"] = str(json_path)
 
     # Export CoNLL-U
     conllu_path = output_path / f"{base_filename}.conllu"
     conllu_content = format_conllu(analysis)
-    with open(conllu_path, 'w', encoding='utf-8') as f:
+    with open(conllu_path, "w", encoding="utf-8") as f:
         f.write(conllu_content)
-    file_paths['conllu'] = str(conllu_path)
+    file_paths["conllu"] = str(conllu_path)
 
     return file_paths

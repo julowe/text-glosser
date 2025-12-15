@@ -10,9 +10,9 @@ import re
 from pathlib import Path
 
 # ISO 639 language code patterns
-ISO_639_1_PATTERN = re.compile(r'^[a-z]{2}$')
+ISO_639_1_PATTERN = re.compile(r"^[a-z]{2}$")
 # ISO 639-2 and 639-3 both use 3-letter codes with the same pattern
-ISO_639_2_PATTERN = re.compile(r'^[a-z]{3}$')
+ISO_639_2_PATTERN = re.compile(r"^[a-z]{3}$")
 ISO_639_3_PATTERN = ISO_639_2_PATTERN  # Same pattern as ISO 639-2
 
 
@@ -42,15 +42,15 @@ def sanitize_filename(filename: str) -> str:
 
     # Remove or replace dangerous characters
     # Allow only alphanumeric, dash, underscore, and period
-    filename = re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
+    filename = re.sub(r"[^a-zA-Z0-9._-]", "_", filename)
 
     # Prevent hidden files
-    if filename.startswith('.'):
-        filename = '_' + filename[1:]
+    if filename.startswith("."):
+        filename = "_" + filename[1:]
 
     # Ensure it's not empty
     if not filename:
-        filename = 'unnamed_file'
+        filename = "unnamed_file"
 
     return filename
 
@@ -77,7 +77,7 @@ def sanitize_session_id(session_id: str) -> str | None:
     None
     """
     # Session IDs should be alphanumeric with optional hyphens
-    if not re.match(r'^[a-zA-Z0-9-]{8,64}$', session_id):
+    if not re.match(r"^[a-zA-Z0-9-]{8,64}$", session_id):
         return None
 
     return session_id
@@ -105,7 +105,7 @@ def validate_iso_639_codes(codes_str: str) -> tuple[bool, list[str], str]:
     (False, [], 'Invalid language code: INVALID')
     """
     # Remove extra whitespace and split
-    codes = [code.strip().lower() for code in codes_str.split(',') if code.strip()]
+    codes = [code.strip().lower() for code in codes_str.split(",") if code.strip()]
 
     if not codes:
         return False, [], "No language codes provided"
@@ -113,7 +113,11 @@ def validate_iso_639_codes(codes_str: str) -> tuple[bool, list[str], str]:
     valid_codes = []
     for code in codes:
         # Check if it matches any ISO 639 pattern
-        if ISO_639_1_PATTERN.match(code) or ISO_639_2_PATTERN.match(code) or ISO_639_3_PATTERN.match(code):
+        if (
+            ISO_639_1_PATTERN.match(code)
+            or ISO_639_2_PATTERN.match(code)
+            or ISO_639_3_PATTERN.match(code)
+        ):
             valid_codes.append(code)
         else:
             return False, [], f"Invalid language code: {code}"
@@ -143,11 +147,11 @@ def sanitize_url(url: str) -> str | None:
     None
     """
     # Only allow http and https
-    if not re.match(r'^https?://', url, re.IGNORECASE):
+    if not re.match(r"^https?://", url, re.IGNORECASE):
         return None
 
     # Prevent javascript: and data: URLs
-    if re.search(r'(javascript|data|file):', url, re.IGNORECASE):
+    if re.search(r"(javascript|data|file):", url, re.IGNORECASE):
         return None
 
     return url
@@ -177,11 +181,16 @@ def sanitize_text_content(content: str, max_length: int = 10_000_000) -> str:
     content = content[:max_length]
 
     # Remove any HTML tags
-    content = re.sub(r'<[^>]+>', '', content)
+    content = re.sub(r"<[^>]+>", "", content)
 
     # Remove any script-like patterns (handle various whitespace and attributes in closing tags)
     # Use a more robust pattern that handles edge cases like </script attr> or </script \t\n>
-    content = re.sub(r'<script[^>]*>.*?</script[\s\S]*?>', '', content, flags=re.IGNORECASE | re.DOTALL)
+    content = re.sub(
+        r"<script[^>]*>.*?</script[\s\S]*?>",
+        "",
+        content,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
 
     return content
 

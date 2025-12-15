@@ -23,7 +23,7 @@ from ..core.registry import get_registry
 
 
 @click.group()
-@click.version_option(version='0.1.0')
+@click.version_option(version="0.1.0")
 def cli():
     """
     Text Glosser - Analyze text using linguistic dictionaries and resources.
@@ -36,37 +36,40 @@ def cli():
 
 @cli.command()
 @click.option(
-    '--language', '-l',
-    help='Filter by language code (e.g., en, ar, sa, zh)'
+    "--language",
+    "-l",
+    help="Filter by language code (e.g., en, ar, sa, zh)",
 )
 @click.option(
-    '--format', '-f',
-    type=click.Choice(['simple', 'detailed', 'json']),
-    default='simple',
-    help='Output format'
+    "--format",
+    "-f",
+    type=click.Choice(["simple", "detailed", "json"]),
+    default="simple",
+    help="Output format",
 )
 def list_dictionaries(language: str, format: str):
     """List all available dictionaries and resources."""
     registry = get_registry()
 
-    if format == 'json':
+    if format == "json":
         import json
+
         resources = registry.get_all_resources()
         output = [
             {
-                'id': res.id,
-                'name': res.name,
-                'format': res.format.value,
-                'type': res.resource_type.value,
-                'primary_language': res.primary_language,
-                'secondary_languages': res.secondary_languages,
-                'is_user_provided': res.is_user_provided,
-                'file_paths': res.file_paths
+                "id": res.id,
+                "name": res.name,
+                "format": res.format.value,
+                "type": res.resource_type.value,
+                "primary_language": res.primary_language,
+                "secondary_languages": res.secondary_languages,
+                "is_user_provided": res.is_user_provided,
+                "file_paths": res.file_paths,
             }
             for res in resources
         ]
         if language:
-            output = [r for r in output if r['primary_language'] == language]
+            output = [r for r in output if r["primary_language"] == language]
         click.echo(json.dumps(output, indent=2))
         return
 
@@ -93,9 +96,11 @@ def list_dictionaries(language: str, format: str):
             click.echo(f"  Type: {res.resource_type.value}")
 
             if res.secondary_languages:
-                click.echo(f"  Secondary languages: {', '.join(res.secondary_languages)}")
+                click.echo(
+                    f"  Secondary languages: {', '.join(res.secondary_languages)}"
+                )
 
-            if format == 'detailed' and res.file_paths:
+            if format == "detailed" and res.file_paths:
                 click.echo("  Files:")
                 for fp in res.file_paths:
                     exists = "✓" if Path(fp).exists() else "✗"
@@ -103,33 +108,38 @@ def list_dictionaries(language: str, format: str):
 
 
 @cli.command()
-@click.argument('sources', nargs=-1, required=True)
+@click.argument("sources", nargs=-1, required=True)
 @click.option(
-    '--resource', '-r',
-    'resources',
+    "--resource",
+    "-r",
+    "resources",
     multiple=True,
     required=True,
-    help='Resource ID to use (can be specified multiple times)'
+    help="Resource ID to use (can be specified multiple times)",
 )
 @click.option(
-    '--output', '-o',
+    "--output",
+    "-o",
     type=click.Path(),
-    default='./output',
-    help='Output directory for results'
+    default="./output",
+    help="Output directory for results",
 )
 @click.option(
-    '--format', '-f',
-    'output_format',
-    type=click.Choice(['markdown', 'json', 'conllu', 'all']),
-    default='all',
-    help='Output format'
+    "--format",
+    "-f",
+    "output_format",
+    type=click.Choice(["markdown", "json", "conllu", "all"]),
+    default="all",
+    help="Output format",
 )
 @click.option(
-    '--preview/--no-preview',
+    "--preview/--no-preview",
     default=True,
-    help='Show preview of text before processing'
+    help="Show preview of text before processing",
 )
-def process(sources: tuple, resources: tuple, output: str, output_format: str, preview: bool):
+def process(
+    sources: tuple, resources: tuple, output: str, output_format: str, preview: bool
+):
     """
     Process text sources with selected dictionaries.
 
@@ -146,7 +156,10 @@ def process(sources: tuple, resources: tuple, output: str, output_format: str, p
     for res_id in resources:
         if not registry.get_resource(res_id):
             click.echo(f"Error: Resource not found: {res_id}", err=True)
-            click.echo("Use 'text-glosser list-dictionaries' to see available resources.", err=True)
+            click.echo(
+                "Use 'text-glosser list-dictionaries' to see available resources.",
+                err=True,
+            )
             sys.exit(1)
 
     # Load sources
@@ -155,28 +168,32 @@ def process(sources: tuple, resources: tuple, output: str, output_format: str, p
         source_path = Path(source)
 
         try:
-            if source.startswith('http://') or source.startswith('https://'):
+            if source.startswith("http://") or source.startswith("https://"):
                 # URL source
                 click.echo(f"Fetching URL: {source}...")
                 content = fetch_url(source)
-                text_sources.append(TextSource(
-                    id=str(uuid.uuid4()),
-                    name=source,
-                    content=content,
-                    source_type='url',
-                    original_path=source
-                ))
+                text_sources.append(
+                    TextSource(
+                        id=str(uuid.uuid4()),
+                        name=source,
+                        content=content,
+                        source_type="url",
+                        original_path=source,
+                    )
+                )
             elif source_path.exists():
                 # File source
                 click.echo(f"Reading file: {source}...")
                 content = read_file(str(source_path))
-                text_sources.append(TextSource(
-                    id=str(uuid.uuid4()),
-                    name=source_path.name,
-                    content=content,
-                    source_type='file',
-                    original_path=str(source_path)
-                ))
+                text_sources.append(
+                    TextSource(
+                        id=str(uuid.uuid4()),
+                        name=source_path.name,
+                        content=content,
+                        source_type="file",
+                        original_path=str(source_path),
+                    )
+                )
             else:
                 click.echo(f"Error: Source not found: {source}", err=True)
                 sys.exit(1)
@@ -187,12 +204,14 @@ def process(sources: tuple, resources: tuple, output: str, output_format: str, p
     # Preview
     if preview:
         for src in text_sources:
-            click.echo(f"\n{click.style(f'Preview: {src.name}', bold=True, fg='green')}")
+            click.echo(
+                f"\n{click.style(f'Preview: {src.name}', bold=True, fg='green')}"
+            )
             click.echo("=" * 60)
-            lines = src.content.split('\n')[:10]
+            lines = src.content.split("\n")[:10]
             for line in lines:
                 click.echo(line)
-            if len(src.content.split('\n')) > 10:
+            if len(src.content.split("\n")) > 10:
                 click.echo(f"... ({len(src.content.split('\n')) - 10} more lines)")
             click.echo("")
 
@@ -211,27 +230,33 @@ def process(sources: tuple, resources: tuple, output: str, output_format: str, p
             analysis = processor.analyze_text(src, list(resources))
 
             # Export based on format
-            base_filename = Path(src.name).stem if src.source_type == 'file' else f"url_{src.id[:8]}"
+            base_filename = (
+                Path(src.name).stem
+                if src.source_type == "file"
+                else f"url_{src.id[:8]}"
+            )
 
-            if output_format == 'all':
-                file_paths = export_all_formats(analysis, str(output_path), base_filename)
+            if output_format == "all":
+                file_paths = export_all_formats(
+                    analysis, str(output_path), base_filename
+                )
                 click.echo("Exported to:")
                 for fmt, path in file_paths.items():
                     click.echo(f"  {fmt}: {path}")
             else:
                 # Single format
-                if output_format == 'markdown':
+                if output_format == "markdown":
                     content = format_markdown(analysis)
-                    ext = 'md'
-                elif output_format == 'json':
+                    ext = "md"
+                elif output_format == "json":
                     content = format_json(analysis)
-                    ext = 'json'
-                elif output_format == 'conllu':
+                    ext = "json"
+                elif output_format == "conllu":
                     content = format_conllu(analysis)
-                    ext = 'conllu'
+                    ext = "conllu"
 
                 file_path = output_path / f"{base_filename}.{ext}"
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 click.echo(f"Exported to: {file_path}")
 
@@ -247,6 +272,7 @@ def process(sources: tuple, resources: tuple, output: str, output_format: str, p
         except Exception as e:
             click.echo(f"Error processing {src.name}: {e}", err=True)
             import traceback
+
             traceback.print_exc()
 
     click.echo(f"\n{click.style('Processing complete!', bold=True, fg='green')}")
@@ -257,5 +283,5 @@ def main():
     cli()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

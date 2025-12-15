@@ -25,6 +25,7 @@ class LanguageCode(BaseModel):
     set3 : Optional[List[str]]
         ISO 639-3 three-letter codes
     """
+
     set1: str = Field(..., min_length=2, max_length=2, description="ISO 639-1 code")
     set2: list[str] | None = Field(default=None, description="ISO 639-2 codes")
     set3: list[str] | None = Field(default=None, description="ISO 639-3 codes")
@@ -32,6 +33,7 @@ class LanguageCode(BaseModel):
 
 class DictionaryFormat(str, Enum):
     """Supported dictionary file formats."""
+
     STARDICT = "stardict"
     MDICT = "mdict"
     HANZIPY = "hanzipy"
@@ -40,6 +42,7 @@ class DictionaryFormat(str, Enum):
 
 class ResourceType(str, Enum):
     """Type of linguistic resource."""
+
     DICTIONARY = "dictionary"
     LIBRARY = "library"
     GRAMMAR_TOOL = "grammar_tool"
@@ -75,6 +78,7 @@ class DictionaryResource(BaseModel):
     set3_codes : Optional[List[str]]
         ISO 639-3 codes
     """
+
     id: str
     name: str
     format: DictionaryFormat
@@ -105,6 +109,7 @@ class TextSource(BaseModel):
     original_path : Optional[str]
         Original file path or URL
     """
+
     id: str
     name: str
     content: str
@@ -127,6 +132,7 @@ class WordDefinition(BaseModel):
     grammatical_info : Optional[Dict[str, Any]]
         Grammatical information if available
     """
+
     word: str
     definitions: list[str]
     source_dict: str
@@ -144,6 +150,7 @@ class LineAnalysis(BaseModel):
     words : List[WordDefinition]
         Analysis for each word in the line
     """
+
     line_number: int
     words: list[WordDefinition]
 
@@ -171,6 +178,7 @@ class TextAnalysis(BaseModel):
     timestamp : datetime
         When the analysis was performed
     """
+
     source_id: str
     source_name: str
     total_lines: int
@@ -200,6 +208,7 @@ class SessionConfig(BaseModel):
     last_accessed : datetime
         When the session was last accessed
     """
+
     session_id: str
     text_sources: list[TextSource]
     selected_resources: list[str]
@@ -207,10 +216,10 @@ class SessionConfig(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     last_accessed: datetime = Field(default_factory=datetime.now)
 
-    @field_validator('retention_days')
+    @field_validator("retention_days")
     @classmethod
     def validate_retention(cls, v):
         """Validate retention days is in valid range."""
         if v is not None and (v < 0 or v > 365):
-            raise ValueError('retention_days must be between 0 and 365')
+            raise ValueError("retention_days must be between 0 and 365")
         return v

@@ -69,7 +69,9 @@ class TextProcessor:
         if resource.format == DictionaryFormat.STARDICT:
             if resource.file_paths:
                 # Find the .ifo file
-                ifo_file = next((fp for fp in resource.file_paths if fp.endswith('.ifo')), None)
+                ifo_file = next(
+                    (fp for fp in resource.file_paths if fp.endswith(".ifo")), None
+                )
                 if ifo_file:
                     try:
                         parser = StarDictParser(ifo_file)
@@ -80,6 +82,7 @@ class TextProcessor:
             # hanzipy will be used differently - import on demand
             try:
                 import hanzipy
+
                 parser = hanzipy
             except ImportError:
                 print("hanzipy not available")
@@ -109,7 +112,7 @@ class TextProcessor:
         """
         # Split on whitespace and common punctuation
         # Keep words, remove empty strings
-        words = re.findall(r'\b\w+\b', text)
+        words = re.findall(r"\b\w+\b", text)
         return words
 
     def _lookup_word(self, word: str, resource: DictionaryResource) -> list[str] | None:
@@ -135,7 +138,7 @@ class TextProcessor:
         definitions = []
 
         if resource.format == DictionaryFormat.STARDICT:
-            if hasattr(parser, 'lookup'):
+            if hasattr(parser, "lookup"):
                 result = parser.lookup(word)
                 if result:
                     definitions.append(result)
@@ -144,10 +147,10 @@ class TextProcessor:
             # Use hanzipy for Chinese characters
             try:
                 # Check if it's a Chinese character
-                if any('\u4e00' <= char <= '\u9fff' for char in word):
+                if any("\u4e00" <= char <= "\u9fff" for char in word):
                     # Get character information
                     for char in word:
-                        if '\u4e00' <= char <= '\u9fff':
+                        if "\u4e00" <= char <= "\u9fff":
                             info = parser.decompose(char)
                             if info:
                                 definition = f"Character: {char}, Decomposition: {info}"
@@ -158,9 +161,7 @@ class TextProcessor:
         return definitions if definitions else None
 
     def analyze_text(
-        self,
-        source: TextSource,
-        selected_resource_ids: list[str]
+        self, source: TextSource, selected_resource_ids: list[str]
     ) -> TextAnalysis:
         """
         Analyze a text source using selected resources.
@@ -178,7 +179,7 @@ class TextProcessor:
             Analysis results
         """
         # Split text into lines
-        lines = source.content.split('\n')
+        lines = source.content.split("\n")
 
         # Get selected resources
         resources = [
@@ -208,21 +209,22 @@ class TextProcessor:
                 for resource in resources:
                     definitions = self._lookup_word(word, resource)
                     if definitions:
-                        word_defs.append(WordDefinition(
-                            word=word,
-                            definitions=definitions,
-                            source_dict=resource.id
-                        ))
+                        word_defs.append(
+                            WordDefinition(
+                                word=word,
+                                definitions=definitions,
+                                source_dict=resource.id,
+                            )
+                        )
                         found_definitions = True
 
                 if not found_definitions:
                     words_without_definitions.add(word)
 
             if word_defs:
-                line_analyses.append(LineAnalysis(
-                    line_number=line_num,
-                    words=word_defs
-                ))
+                line_analyses.append(
+                    LineAnalysis(line_number=line_num, words=word_defs)
+                )
 
         # Add error for words without definitions
         if words_without_definitions:
@@ -240,5 +242,5 @@ class TextProcessor:
             dictionaries_used=selected_resource_ids,
             lines=line_analyses,
             errors=errors,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )

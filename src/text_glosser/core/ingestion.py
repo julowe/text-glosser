@@ -42,10 +42,12 @@ def read_file(file_path: str, max_size: int = 10_000_000) -> str:
 
     # Check file size
     if path.stat().st_size > max_size:
-        raise ValueError(f"File too large: {path.stat().st_size} bytes (max: {max_size})")
+        raise ValueError(
+            f"File too large: {path.stat().st_size} bytes (max: {max_size})"
+        )
 
     # Read file
-    with open(path, encoding='utf-8', errors='ignore') as f:
+    with open(path, encoding="utf-8", errors="ignore") as f:
         content = f.read()
 
     return sanitize_text_content(content, max_size)
@@ -85,27 +87,25 @@ def fetch_url(url: str, max_size: int = 10_000_000, timeout: int = 30) -> str:
         raise ValueError(f"Invalid URL: {url}")
 
     # Fetch content
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (compatible; TextGlosser/0.1.0)'
-    }
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; TextGlosser/0.1.0)"}
 
     response = requests.get(clean_url, headers=headers, timeout=timeout, stream=True)
     response.raise_for_status()
 
     # Check content size
-    content_length = response.headers.get('content-length')
+    content_length = response.headers.get("content-length")
     if content_length and int(content_length) > max_size:
         raise ValueError(f"Content too large: {content_length} bytes (max: {max_size})")
 
     # Read content in chunks to enforce size limit
-    content_bytes = b''
+    content_bytes = b""
     for chunk in response.iter_content(chunk_size=8192):
         content_bytes += chunk
         if len(content_bytes) > max_size:
             raise ValueError(f"Content exceeded maximum size: {max_size} bytes")
 
     # Parse HTML and extract text
-    soup = BeautifulSoup(content_bytes, 'lxml')
+    soup = BeautifulSoup(content_bytes, "lxml")
 
     # Remove script and style elements
     for script in soup(["script", "style", "noscript"]):
@@ -117,7 +117,7 @@ def fetch_url(url: str, max_size: int = 10_000_000, timeout: int = 30) -> str:
     # Clean up whitespace
     lines = (line.strip() for line in text.splitlines())
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-    text = '\n'.join(chunk for chunk in chunks if chunk)
+    text = "\n".join(chunk for chunk in chunks if chunk)
 
     return sanitize_text_content(text, max_size)
 
@@ -139,9 +139,9 @@ def validate_source_accessible(source_path: str, source_type: str) -> bool:
         True if accessible, False otherwise
     """
     try:
-        if source_type == 'file':
+        if source_type == "file":
             return Path(source_path).exists()
-        elif source_type == 'url':
+        elif source_type == "url":
             clean_url = sanitize_url(source_path)
             if not clean_url:
                 return False

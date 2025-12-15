@@ -40,11 +40,11 @@ class StarDictParser:
         self.ifo_file = Path(ifo_path)
         base_path = self.ifo_file.parent / self.ifo_file.stem
 
-        self.idx_file = base_path.with_suffix('.idx')
+        self.idx_file = base_path.with_suffix(".idx")
 
         # Check for compressed or uncompressed dict file
-        dict_dz = base_path.with_suffix('.dict.dz')
-        dict_plain = base_path.with_suffix('.dict')
+        dict_dz = base_path.with_suffix(".dict.dz")
+        dict_plain = base_path.with_suffix(".dict")
 
         if dict_dz.exists():
             self.dict_file = dict_dz
@@ -63,25 +63,25 @@ class StarDictParser:
         if not self.idx_file.exists():
             raise FileNotFoundError(f"Index file not found: {self.idx_file}")
 
-        with open(self.idx_file, 'rb') as f:
+        with open(self.idx_file, "rb") as f:
             data = f.read()
 
         pos = 0
         while pos < len(data):
             # Find null terminator for word
-            null_pos = data.find(b'\x00', pos)
+            null_pos = data.find(b"\x00", pos)
             if null_pos == -1:
                 break
 
             # Extract word
-            word = data[pos:null_pos].decode('utf-8', errors='ignore')
+            word = data[pos:null_pos].decode("utf-8", errors="ignore")
 
             # Read offset and size (both 4-byte integers)
             if null_pos + 9 > len(data):
                 break
 
-            offset = struct.unpack('>I', data[null_pos+1:null_pos+5])[0]
-            size = struct.unpack('>I', data[null_pos+5:null_pos+9])[0]
+            offset = struct.unpack(">I", data[null_pos + 1 : null_pos + 5])[0]
+            size = struct.unpack(">I", data[null_pos + 5 : null_pos + 9])[0]
 
             self.index[word] = (offset, size)
             pos = null_pos + 9
@@ -108,17 +108,17 @@ class StarDictParser:
         try:
             if self.is_compressed:
                 # Read compressed dict file
-                with gzip.open(self.dict_file, 'rb') as f:
+                with gzip.open(self.dict_file, "rb") as f:
                     f.seek(offset)
                     data = f.read(size)
             else:
                 # Read uncompressed dict file
-                with open(self.dict_file, 'rb') as f:
+                with open(self.dict_file, "rb") as f:
                     f.seek(offset)
                     data = f.read(size)
 
             # Decode definition
-            definition = data.decode('utf-8', errors='ignore')
+            definition = data.decode("utf-8", errors="ignore")
             return definition
         except Exception as e:
             # Log error but don't crash
@@ -141,10 +141,7 @@ class StarDictParser:
         List[str]
             List of matching words
         """
-        matches = [
-            word for word in self.index.keys()
-            if word.startswith(prefix)
-        ]
+        matches = [word for word in self.index.keys() if word.startswith(prefix)]
         return matches[:limit]
 
     def get_all_words(self) -> list[str]:
