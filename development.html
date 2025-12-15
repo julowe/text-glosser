@@ -1,0 +1,426 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Development Guide &mdash; Text Glosser 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Quick Start" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Text Glosser
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Development Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#setting-up-development-environment">Setting Up Development Environment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#clone-and-install">Clone and Install</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#running-the-application">Running the Application</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#web-ui-development-mode">Web UI (Development Mode)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cli-development-mode">CLI (Development Mode)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#using-docker-for-development">Using Docker for Development</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#build-and-run-locally">Build and Run Locally</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build-docker-image-manually">Build Docker Image Manually</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#running-tests">Running Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#run-all-tests">Run All Tests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-with-coverage">Run with Coverage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-specific-tests">Run Specific Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#code-quality">Code Quality</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#linting-with-ruff">Linting with Ruff</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#type-checking-with-mypy">Type Checking with MyPy</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#building-documentation">Building Documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#build-sphinx-documentation">Build Sphinx Documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#project-structure">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-new-features">Adding New Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#code-style-guidelines">Code Style Guidelines</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-function-documentation">Example Function Documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#debugging">Debugging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#using-ipython">Using IPython</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-python-debugger">Using Python Debugger</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Text Glosser</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Development Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/development.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="development-guide">
+<span id="development"></span><h1>Development Guide<a class="headerlink" href="#development-guide" title="Link to this heading"></a></h1>
+<p>This guide describes how to set up a development environment for Text Glosser.</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Python 3.12 or higher</p></li>
+<li><p>python3-pip</p></li>
+<li><p>git</p></li>
+<li><p>docker (optional, for container development)</p></li>
+</ul>
+</section>
+<section id="setting-up-development-environment">
+<h2>Setting Up Development Environment<a class="headerlink" href="#setting-up-development-environment" title="Link to this heading"></a></h2>
+<section id="clone-and-install">
+<h3>Clone and Install<a class="headerlink" href="#clone-and-install" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p>Clone the repository:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">julowe</span><span class="o">/</span><span class="n">text</span><span class="o">-</span><span class="n">glosser</span><span class="o">.</span><span class="n">git</span>
+<span class="n">cd</span> <span class="n">text</span><span class="o">-</span><span class="n">glosser</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create a virtual environment:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">venv</span> <span class="n">venv</span>
+<span class="n">source</span> <span class="n">venv</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>  <span class="c1"># On Windows: venv\Scripts\activate</span>
+</pre></div>
+</div>
+</li>
+<li><p>Install the package in editable mode with development dependencies:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+<section id="running-the-application">
+<h2>Running the Application<a class="headerlink" href="#running-the-application" title="Link to this heading"></a></h2>
+<section id="web-ui-development-mode">
+<h3>Web UI (Development Mode)<a class="headerlink" href="#web-ui-development-mode" title="Link to this heading"></a></h3>
+<p>Run the web server with auto-reload:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uvicorn</span> <span class="n">text_glosser</span><span class="o">.</span><span class="n">web</span><span class="o">.</span><span class="n">main</span><span class="p">:</span><span class="n">app</span> <span class="o">--</span><span class="n">reload</span> <span class="o">--</span><span class="n">host</span> <span class="mf">0.0.0.0</span> <span class="o">--</span><span class="n">port</span> <span class="mi">8080</span>
+</pre></div>
+</div>
+<p>Or set PYTHONPATH and run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PYTHONPATH</span><span class="o">=</span><span class="n">src</span> <span class="n">uvicorn</span> <span class="n">text_glosser</span><span class="o">.</span><span class="n">web</span><span class="o">.</span><span class="n">main</span><span class="p">:</span><span class="n">app</span> <span class="o">--</span><span class="n">reload</span> <span class="o">--</span><span class="n">host</span> <span class="mf">0.0.0.0</span> <span class="o">--</span><span class="n">port</span> <span class="mi">8080</span>
+</pre></div>
+</div>
+<p>Access at <a class="reference external" href="http://localhost:8080">http://localhost:8080</a></p>
+</section>
+<section id="cli-development-mode">
+<h3>CLI (Development Mode)<a class="headerlink" href="#cli-development-mode" title="Link to this heading"></a></h3>
+<p>Run the CLI from source:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># With package installed in editable mode</span>
+<span class="n">text</span><span class="o">-</span><span class="n">glosser</span> <span class="nb">list</span><span class="o">-</span><span class="n">dictionaries</span>
+
+<span class="c1"># Or directly with PYTHONPATH</span>
+<span class="n">PYTHONPATH</span><span class="o">=</span><span class="n">src</span> <span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">text_glosser</span><span class="o">.</span><span class="n">cli</span><span class="o">.</span><span class="n">main</span> <span class="nb">list</span><span class="o">-</span><span class="n">dictionaries</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="using-docker-for-development">
+<h2>Using Docker for Development<a class="headerlink" href="#using-docker-for-development" title="Link to this heading"></a></h2>
+<section id="build-and-run-locally">
+<h3>Build and Run Locally<a class="headerlink" href="#build-and-run-locally" title="Link to this heading"></a></h3>
+<p>Use the development docker-compose file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build and run</span>
+<span class="n">docker</span><span class="o">-</span><span class="n">compose</span> <span class="o">-</span><span class="n">f</span> <span class="n">docker</span><span class="o">-</span><span class="n">compose</span><span class="o">.</span><span class="n">dev</span><span class="o">.</span><span class="n">yml</span> <span class="n">up</span> <span class="o">--</span><span class="n">build</span>
+
+<span class="c1"># Run in background</span>
+<span class="n">docker</span><span class="o">-</span><span class="n">compose</span> <span class="o">-</span><span class="n">f</span> <span class="n">docker</span><span class="o">-</span><span class="n">compose</span><span class="o">.</span><span class="n">dev</span><span class="o">.</span><span class="n">yml</span> <span class="n">up</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">build</span>
+
+<span class="c1"># View logs</span>
+<span class="n">docker</span><span class="o">-</span><span class="n">compose</span> <span class="o">-</span><span class="n">f</span> <span class="n">docker</span><span class="o">-</span><span class="n">compose</span><span class="o">.</span><span class="n">dev</span><span class="o">.</span><span class="n">yml</span> <span class="n">logs</span> <span class="o">-</span><span class="n">f</span>
+
+<span class="c1"># Stop</span>
+<span class="n">docker</span><span class="o">-</span><span class="n">compose</span> <span class="o">-</span><span class="n">f</span> <span class="n">docker</span><span class="o">-</span><span class="n">compose</span><span class="o">.</span><span class="n">dev</span><span class="o">.</span><span class="n">yml</span> <span class="n">down</span>
+</pre></div>
+</div>
+<p>The development compose file mounts your source code as volumes, so changes are reflected immediately (with server restart).</p>
+</section>
+<section id="build-docker-image-manually">
+<h3>Build Docker Image Manually<a class="headerlink" href="#build-docker-image-manually" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">build</span> <span class="o">-</span><span class="n">t</span> <span class="n">text</span><span class="o">-</span><span class="n">glosser</span><span class="p">:</span><span class="n">dev</span> <span class="o">.</span>
+<span class="n">docker</span> <span class="n">run</span> <span class="o">-</span><span class="n">p</span> <span class="mi">8080</span><span class="p">:</span><span class="mi">8080</span> <span class="n">text</span><span class="o">-</span><span class="n">glosser</span><span class="p">:</span><span class="n">dev</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="running-tests">
+<h2>Running Tests<a class="headerlink" href="#running-tests" title="Link to this heading"></a></h2>
+<section id="run-all-tests">
+<h3>Run All Tests<a class="headerlink" href="#run-all-tests" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PYTHONPATH</span><span class="o">=</span><span class="n">src</span> <span class="n">pytest</span>
+</pre></div>
+</div>
+</section>
+<section id="run-with-coverage">
+<h3>Run with Coverage<a class="headerlink" href="#run-with-coverage" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PYTHONPATH</span><span class="o">=</span><span class="n">src</span> <span class="n">pytest</span> <span class="o">--</span><span class="n">cov</span><span class="o">=</span><span class="n">text_glosser</span> <span class="o">--</span><span class="n">cov</span><span class="o">-</span><span class="n">report</span><span class="o">=</span><span class="n">html</span> <span class="o">--</span><span class="n">cov</span><span class="o">-</span><span class="n">report</span><span class="o">=</span><span class="n">term</span>
+</pre></div>
+</div>
+<p>View coverage report at <code class="docutils literal notranslate"><span class="pre">htmlcov/index.html</span></code></p>
+</section>
+<section id="run-specific-tests">
+<h3>Run Specific Tests<a class="headerlink" href="#run-specific-tests" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run tests in a specific file</span>
+<span class="n">PYTHONPATH</span><span class="o">=</span><span class="n">src</span> <span class="n">pytest</span> <span class="n">tests</span><span class="o">/</span><span class="n">unit</span><span class="o">/</span><span class="n">test_models</span><span class="o">.</span><span class="n">py</span>
+
+<span class="c1"># Run a specific test</span>
+<span class="n">PYTHONPATH</span><span class="o">=</span><span class="n">src</span> <span class="n">pytest</span> <span class="n">tests</span><span class="o">/</span><span class="n">unit</span><span class="o">/</span><span class="n">test_models</span><span class="o">.</span><span class="n">py</span><span class="p">::</span><span class="n">TestLanguageCode</span><span class="p">::</span><span class="n">test_create_simple</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="code-quality">
+<h2>Code Quality<a class="headerlink" href="#code-quality" title="Link to this heading"></a></h2>
+<section id="linting-with-ruff">
+<h3>Linting with Ruff<a class="headerlink" href="#linting-with-ruff" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check all code</span>
+<span class="n">ruff</span> <span class="n">check</span> <span class="n">src</span><span class="o">/</span> <span class="n">tests</span><span class="o">/</span>
+
+<span class="c1"># Auto-fix issues</span>
+<span class="n">ruff</span> <span class="n">check</span> <span class="o">--</span><span class="n">fix</span> <span class="n">src</span><span class="o">/</span> <span class="n">tests</span><span class="o">/</span>
+</pre></div>
+</div>
+</section>
+<section id="type-checking-with-mypy">
+<h3>Type Checking with MyPy<a class="headerlink" href="#type-checking-with-mypy" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mypy</span> <span class="n">src</span><span class="o">/</span> <span class="o">--</span><span class="n">ignore</span><span class="o">-</span><span class="n">missing</span><span class="o">-</span><span class="n">imports</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="building-documentation">
+<h2>Building Documentation<a class="headerlink" href="#building-documentation" title="Link to this heading"></a></h2>
+<section id="build-sphinx-documentation">
+<h3>Build Sphinx Documentation<a class="headerlink" href="#build-sphinx-documentation" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">docs</span>
+<span class="n">make</span> <span class="n">html</span>
+</pre></div>
+</div>
+<p>View the documentation at <code class="docutils literal notranslate"><span class="pre">docs/_build/html/index.html</span></code></p>
+</section>
+</section>
+<section id="project-structure">
+<h2>Project Structure<a class="headerlink" href="#project-structure" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>text-glosser/
+├── src/
+│   └── text_glosser/
+│       ├── core/           # Core processing logic
+│       ├── cli/            # Command-line interface
+│       ├── web/            # Web interface
+│       └── utils/          # Utility functions
+├── tests/
+│   ├── unit/               # Unit tests
+│   └── integration/        # Integration tests
+├── docs/                   # Sphinx documentation
+├── language_resources/     # Built-in dictionaries
+├── requirements.txt        # Runtime dependencies
+├── requirements-dev.txt    # Development dependencies
+├── pyproject.toml          # Tool configuration
+├── setup.py                # Package setup
+├── Dockerfile              # Production container
+├── docker-compose.yml      # Production container
+└── docker-compose.dev.yml  # Development container
+</pre></div>
+</div>
+</section>
+<section id="adding-new-features">
+<h2>Adding New Features<a class="headerlink" href="#adding-new-features" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>Create a new branch:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">checkout</span> <span class="o">-</span><span class="n">b</span> <span class="n">feature</span><span class="o">/</span><span class="n">my</span><span class="o">-</span><span class="n">new</span><span class="o">-</span><span class="n">feature</span>
+</pre></div>
+</div>
+</li>
+<li><p>Write tests first (TDD approach):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add tests to tests/unit/ or tests/integration/</span>
+<span class="n">PYTHONPATH</span><span class="o">=</span><span class="n">src</span> <span class="n">pytest</span> <span class="n">tests</span><span class="o">/</span><span class="n">unit</span><span class="o">/</span><span class="n">test_my_feature</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+</li>
+<li><p>Implement the feature in <code class="docutils literal notranslate"><span class="pre">src/text_glosser/</span></code></p></li>
+<li><p>Run tests and linting:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PYTHONPATH</span><span class="o">=</span><span class="n">src</span> <span class="n">pytest</span>
+<span class="n">ruff</span> <span class="n">check</span> <span class="n">src</span><span class="o">/</span> <span class="n">tests</span><span class="o">/</span>
+<span class="n">mypy</span> <span class="n">src</span><span class="o">/</span> <span class="o">--</span><span class="n">ignore</span><span class="o">-</span><span class="n">missing</span><span class="o">-</span><span class="n">imports</span>
+</pre></div>
+</div>
+</li>
+<li><p>Update documentation if needed</p></li>
+<li><p>Commit and push your changes</p></li>
+<li><p>Open a pull request</p></li>
+</ol>
+</section>
+<section id="code-style-guidelines">
+<h2>Code Style Guidelines<a class="headerlink" href="#code-style-guidelines" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Follow PEP 8 style guide</p></li>
+<li><p>Use type hints for function parameters and return values</p></li>
+<li><p>Write NumPy/SciPy style docstrings</p></li>
+<li><p>Use ruff for linting (not black)</p></li>
+<li><p>Maximum line length: default (88 characters)</p></li>
+<li><p>Use meaningful variable and function names</p></li>
+</ul>
+<section id="example-function-documentation">
+<h3>Example Function Documentation<a class="headerlink" href="#example-function-documentation" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">analyze_text</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">TextSource</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">TextAnalysis</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Analyze a text source using selected resources.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source : TextSource</span>
+<span class="sd">        Text source to analyze</span>
+<span class="sd">    resources : List[str]</span>
+<span class="sd">        IDs of resources to use</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    TextAnalysis</span>
+<span class="sd">        Analysis results with word definitions</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If no resources are selected</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; source = TextSource(id=&quot;1&quot;, name=&quot;test&quot;, content=&quot;hello&quot;, source_type=&quot;file&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; result = analyze_text(source, [&quot;dict-1&quot;])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="debugging">
+<h2>Debugging<a class="headerlink" href="#debugging" title="Link to this heading"></a></h2>
+<section id="using-ipython">
+<h3>Using IPython<a class="headerlink" href="#using-ipython" title="Link to this heading"></a></h3>
+<p>IPython is included in development dependencies:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ipython</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">text_glosser.core.processor</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextProcessor</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="c1"># Interactive debugging and testing</span>
+</pre></div>
+</div>
+</section>
+<section id="using-python-debugger">
+<h3>Using Python Debugger<a class="headerlink" href="#using-python-debugger" title="Link to this heading"></a></h3>
+<p>Add breakpoints in your code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pdb</span><span class="p">;</span> <span class="n">pdb</span><span class="o">.</span><span class="n">set_trace</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Or use the built-in <code class="docutils literal notranslate"><span class="pre">breakpoint()</span></code> function (Python 3.7+):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">breakpoint</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Ensure all tests pass</p></li>
+<li><p>Update documentation</p></li>
+<li><p>Follow code style guidelines</p></li>
+<li><p>Write clear commit messages</p></li>
+<li><p>Submit pull request with description of changes</p></li>
+</ol>
+<p>For more information, see the main README.md file.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quick Start" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Text Glosser Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
