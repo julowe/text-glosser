@@ -49,6 +49,7 @@ LANGUAGE_NAMES = {
     "or": "Odia",
 }
 
+
 def get_language_display_name(lang_code: str) -> str:
     """
     Get human-readable language name with code.
@@ -67,6 +68,7 @@ def get_language_display_name(lang_code: str) -> str:
     if name:
         return f"{name} ({lang_code})"
     return f"({lang_code})"
+
 
 # Initialize FastAPI app
 app = FastAPI(title="Text Glosser", version="0.1.0")
@@ -352,7 +354,6 @@ def create_main_page():
         ui.button(
             "Process Text", on_click=lambda: process_text(state), color="primary"
         ).classes("text-lg px-8 py-4")
-
 
 
 def handle_url_input(urls_text, state):

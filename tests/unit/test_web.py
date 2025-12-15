@@ -2,7 +2,6 @@
 Tests for web UI functionality.
 """
 
-
 from text_glosser.web.main import LANGUAGE_NAMES, get_language_display_name
 
 
