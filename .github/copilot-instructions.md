@@ -77,3 +77,9 @@ This is a Python project. Follow these conventions:
 - **Binary Data**: Dictionary data files are binary and should not be treated as text
 - **Character Encodings**: Support Unicode properly for non-Latin scripts (Arabic, Sanskrit)
 - **Resource Loading**: Optimize for efficient loading and memory usage of lexicon data
+- **Right-to-Left Text**: Arabic text uses RTL writing direction
+  - Ensure proper bidirectional (BiDi) text handling in UI components
+  - Use Unicode BiDi control characters when necessary (e.g., LRM, RLM, LRE, RLE)
+  - Test mixed LTR/RTL content (e.g., Arabic text with English glosses)
+  - Preserve RTL text directionality in data processing and output
+  - Be aware of terminal/console limitations with RTL display
