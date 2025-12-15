@@ -1,10 +1,35 @@
 # Text Glosser 📚
 
-A comprehensive text analysis and glossing application that provides word-by-word definitions and grammatical information using multiple linguistic dictionaries and resources.
+A comprehensive text analysis and glossing application that provides
+word-by-word definitions and grammatical information using multiple
+linguistic dictionaries and resources.
+
+## 🚀 Quick Start
+
+```bash
+# Pull and run the latest version
+docker run -p 8080:8080 ghcr.io/julowe/text-glosser:latest
+```
+
+Or use docker-compose:
+
+```bash
+# Pull the docker-compose.yml from the repository or create one:
+docker-compose up -d
+```
+
+### Web UI Usage
+
+1. Open [the web UI](http://localhost:8080) in your browser
+2. **Select Dictionaries**: Choose one or more dictionaries organized by language
+3. **Upload Text**: Upload files or enter URLs
+4. **Process**: Click "Process Text" to analyze
+5. **Download Results**: Get results in Markdown, JSON, or CoNLL-U format
 
 ## 🌟 Features
 
 ### Core Functionality
+
 - **Multi-Dictionary Support**: Analyze text using multiple dictionaries simultaneously
 - **Multiple Input Sources**: Process text from files or web URLs
 - **Multiple Output Formats**: Export results as Markdown, JSON, and CoNLL-U
@@ -14,13 +39,15 @@ A comprehensive text analysis and glossing application that provides word-by-wor
 ### Supported Dictionaries & Resources
 
 #### Built-in Dictionaries
+
 - **Sanskrit-English**: Monier-Williams Dictionary (Cologne Digital Sanskrit Dictionaries)
-- **Arabic-English**: 
+- **Arabic-English**:
   - Lane's Arabic-English Lexicon
   - Salmone's Arabic-English Lexicon
 - **Chinese**: HanziPy library for Chinese character analysis
 
 #### Supported Formats
+
 - StarDict dictionary format (.ifo, .idx, .dict/.dict.dz files)
 - Python library integration (e.g., hanzipy)
 - Extensible architecture for adding MDict and other formats
@@ -28,6 +55,7 @@ A comprehensive text analysis and glossing application that provides word-by-wor
 ### Interfaces
 
 #### Command-Line Interface (CLI)
+
 - Built with Click for robust argument parsing
 - List available dictionaries
 - Process files and URLs
@@ -35,6 +63,7 @@ A comprehensive text analysis and glossing application that provides word-by-wor
 - Preview mode before processing
 
 #### Web Interface
+
 - Built with FastAPI + NiceGUI
 - Interactive dictionary selection
 - File upload with drag-and-drop
@@ -44,6 +73,7 @@ A comprehensive text analysis and glossing application that provides word-by-wor
 - Configurable data retention policies
 
 ### Security Features
+
 - Input sanitization for all user inputs
 - URL validation (HTTP/HTTPS only)
 - File size limits to prevent DoS attacks
@@ -51,61 +81,24 @@ A comprehensive text analysis and glossing application that provides word-by-wor
 - Safe file naming
 - HTML/JavaScript tag removal from fetched content
 
-## 🚀 Quick Start
+## Install and Run from source code
 
-### Using Docker (Recommended for End Users)
-
-The easiest way to use Text Glosser is with Docker:
-
-```bash
-# Pull and run the latest version
-docker pull ghcr.io/julowe/text-glosser:latest
-docker run -p 8080:8080 ghcr.io/julowe/text-glosser:latest
-
-# Access the web UI at http://localhost:8080
-```
-
-Or use docker-compose:
-
-```bash
-# Pull the docker-compose.yml from the repository or create one:
-docker-compose up -d
-
-# Access at http://localhost:8080
-```
-
-### From Source (For Developers)
+### Install from source
 
 ```bash
 # Clone the repository
 git clone https://github.com/julowe/text-glosser.git
 cd text-glosser
 
-# Install package in editable mode (Python 3.12+ required)
-# This installs all runtime dependencies from pyproject.toml
-pip install -e .
-
-# For development with additional tools
-pip install -e ".[dev]"
-# Or alternatively:
-# pip install -r requirements-dev.txt
-```
-pip install -e .
+# Install dependencies (Python 3.12+ required)
+pip install .
 ```
 
-See the [Development Guide](docs/development.rst) for detailed setup instructions.
-
-### Web UI Usage
-
-1. Open http://localhost:8080 in your browser
-2. **Select Dictionaries**: Choose one or more dictionaries organized by language
-3. **Upload Text**: Upload files or enter URLs
-4. **Process**: Click "Process Text" to analyze
-5. **Download Results**: Get results in Markdown, JSON, or CoNLL-U format
+See the [Installation Guide](docs/installation.rst) for detailed setup instructions,
 
 ### CLI Usage
 
-If installed from source:
+After installation from source:
 
 ```bash
 # List available dictionaries
@@ -185,40 +178,6 @@ Standard Universal Dependencies CoNLL-U format with word definitions stored in t
 
 ## 🏗️ Architecture
 
-### Project Structure
-
-```
-text-glosser/
-├── src/
-│   └── text_glosser/
-│       ├── core/           # Core processing logic
-│       │   ├── models.py       # Data models
-│       │   ├── registry.py     # Resource registry
-│       │   ├── ingestion.py    # File/URL reading
-│       │   ├── processor.py    # Text analysis engine
-│       │   ├── exporters.py    # Output formatters
-│       │   ├── session.py      # Session management
-│       │   └── parsers/        # Dictionary parsers
-│       │       └── stardict.py
-│       ├── cli/            # Command-line interface
-│       │   └── main.py
-│       ├── web/            # Web interface
-│       │   └── main.py
-│       └── utils/          # Utilities
-│           └── security.py     # Input sanitization
-├── language_resources/     # Built-in dictionaries
-│   ├── ar/                 # Arabic resources
-│   │   ├── lane-lexicon/
-│   │   └── salmone-lexicon/
-│   └── sa/                 # Sanskrit resources
-│       └── monier-williams-cologne/
-├── tests/                  # Test suite
-├── docs/                   # Documentation
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
-```
-
 ### Key Components
 
 - **ResourceRegistry**: Manages available dictionaries and resources
@@ -230,18 +189,21 @@ text-glosser/
 ## 🔒 Security
 
 ### Input Sanitization
+
 - All user inputs are sanitized to prevent injection attacks
 - File paths validated to prevent directory traversal
 - URLs restricted to HTTP/HTTPS protocols
 - Content size limits enforced
 
 ### File Upload Security
+
 - Filename sanitization
 - File size limits (default: 10MB)
 - Type validation
 - Malicious content detection (planned)
 
 ### Session Security
+
 - Random session ID generation (URL-safe tokens)
 - Session data isolation
 - Automatic cleanup of expired sessions
@@ -261,21 +223,20 @@ cd text-glosser
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install development dependencies
-pip install -r requirements-dev.txt
-
 # Install package in editable mode
-pip install -e .
+pip install -e .[dev]
 ```
 
 ### Running Locally
 
 **Web UI (with auto-reload):**
+
 ```bash
 uvicorn text_glosser.web.main:app --reload --host 0.0.0.0 --port 8080
 ```
 
 **CLI:**
+
 ```bash
 text-glosser list-dictionaries
 text-glosser process mytext.txt -r mw-sanskrit-english -o ./output
@@ -308,6 +269,12 @@ PYTHONPATH=src pytest tests/unit/test_models.py
 ### Code Quality
 
 ```bash
+# Check formatting with ruff
+ruff format src/ tests/ --diff
+
+# Fix formatting issues
+ruff format src/ tests/
+
 # Lint with ruff
 ruff check src/ tests/
 
@@ -318,36 +285,12 @@ ruff check --fix src/ tests/
 mypy src/ --ignore-missing-imports
 ```
 
-### Project Structure
-
-```
-text-glosser/
-├── src/text_glosser/      # Source code
-│   ├── core/              # Core processing logic
-│   ├── cli/               # CLI interface
-│   ├── web/               # Web interface
-│   └── utils/             # Utilities
-├── tests/                 # Test suite
-├── docs/                  # Sphinx documentation
-├── language_resources/    # Built-in dictionaries
-├── requirements.txt       # Runtime dependencies
-└── requirements-dev.txt   # Development dependencies
-```
-
-### Dependencies
-
-The project uses two requirements files:
-
-- **requirements.txt**: Runtime dependencies only (for Docker and end users)
-- **requirements-dev.txt**: Development dependencies (testing, docs, linting)
-
-Both files are referenced in **pyproject.toml** for tool configuration.
-
 ## 📝 Documentation Style
 
 All code follows NumPy/SciPy docstring conventions for compatibility with Sphinx documentation generation.
 
 Example:
+
 ```python
 def process_text(source: str, resources: List[str]) -> Analysis:
     """
@@ -385,16 +328,13 @@ Contributions are welcome! Please:
 ### Development Guidelines
 
 - Follow PEP 8 style guide
+- Use `ruff` for formatting and linting
 - Use type hints
 - Write comprehensive docstrings
 - Add unit tests for new features
 - Update documentation
 
-## 📜 License
-
-[Add license information]
-
-## 🙏 Acknowledgments
+## Acknowledgments
 
 ### Dictionary Sources
 
@@ -418,15 +358,16 @@ Contributions are welcome! Please:
 - [ ] Advanced search and filtering
 - [ ] Bulk processing capabilities
 
-## 📞 Support
+## Support
 
 For issues, questions, or suggestions:
+
 - Open an issue on GitHub
-- [Add contact information]
 
 ## Version History
 
 ### 0.1.0 (Initial Release)
+
 - Core text processing functionality
 - CLI interface
 - Web UI with FastAPI + NiceGUI
