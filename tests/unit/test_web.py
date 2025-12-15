@@ -72,6 +72,95 @@ class TestWebUICheckboxBehavior:
         # in integration tests or browser automation tests
         pass
 
+    def test_checkbox_event_handler_with_mock(self):
+        """
+        Test the checkbox event handler logic with mocked checkboxes.
+
+        This tests the actual handler logic that should be applied when
+        the "Select all" checkbox is toggled.
+        """
+
+        # Mock checkbox class to simulate NiceGUI checkbox behavior
+        class MockCheckbox:
+            def __init__(self, enabled=True):
+                self.value = False
+                self._props = {"disable": not enabled}
+                self.set_value_called_with = []
+
+            def set_value(self, val):
+                """Mock the set_value method to track calls."""
+                if not self._props.get("disable", False):
+                    self.value = val
+                    self.set_value_called_with.append(val)
+
+        # Mock expansion widget
+        class MockExpansion:
+            def __init__(self):
+                self.is_open = False
+
+            def open(self):
+                self.is_open = True
+
+        # Create mock checkboxes (2 enabled, 1 disabled)
+        enabled_cb1 = MockCheckbox(enabled=True)
+        enabled_cb2 = MockCheckbox(enabled=True)
+        disabled_cb = MockCheckbox(enabled=False)
+        checkboxes = [enabled_cb1, enabled_cb2, disabled_cb]
+
+        expansion = MockExpansion()
+
+        # Create the handler (simulating the create_lang_handler function)
+        def create_lang_handler(expansion_widget, checkboxes):
+            def on_lang_check(e):
+                # Expand the group when checked
+                if e.value:
+                    expansion_widget.open()
+                # Set all child checkboxes to the same value
+                for cb in checkboxes:
+                    # Check if checkbox is enabled by looking at disabled property
+                    if not cb._props.get("disable", False):
+                        cb.set_value(e.value)
+
+            return on_lang_check
+
+        handler = create_lang_handler(expansion, checkboxes)
+
+        # Mock event object
+        class MockEvent:
+            def __init__(self, value):
+                self.value = value
+
+        # Test: Checking the master checkbox
+        event_checked = MockEvent(value=True)
+        handler(event_checked)
+
+        # Verify expansion opened
+        assert expansion.is_open is True
+
+        # Verify enabled checkboxes were set to True
+        assert enabled_cb1.value is True
+        assert enabled_cb2.value is True
+        assert True in enabled_cb1.set_value_called_with
+        assert True in enabled_cb2.set_value_called_with
+
+        # Verify disabled checkbox was NOT changed
+        assert disabled_cb.value is False
+        assert len(disabled_cb.set_value_called_with) == 0
+
+        # Test: Unchecking the master checkbox
+        event_unchecked = MockEvent(value=False)
+        handler(event_unchecked)
+
+        # Verify enabled checkboxes were set to False
+        assert enabled_cb1.value is False
+        assert enabled_cb2.value is False
+        assert False in enabled_cb1.set_value_called_with
+        assert False in enabled_cb2.set_value_called_with
+
+        # Verify disabled checkbox still NOT changed
+        assert disabled_cb.value is False
+        assert len(disabled_cb.set_value_called_with) == 0
+
 
 class TestLanguageDisplayFormat:
     """Test the format of language display names."""

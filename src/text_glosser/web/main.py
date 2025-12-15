@@ -242,25 +242,29 @@ def create_main_page():
                     )
 
                 # Connect master checkbox to expand and select all items
-                def create_lang_handler(expansion_widget, checkboxes):
+                def create_lang_handler(lang_code, expansion_widget, checkboxes):
                     def on_lang_check(e):
+                        # The event value indicates whether checkbox is checked
+                        checked = e.value
+
                         # Expand the group when checked
-                        if e.value:
+                        if checked:
                             expansion_widget.open()
+
                         # Set all child checkboxes to the same value
                         for cb in checkboxes:
-                            # Check if checkbox is enabled by looking at disabled property
+                            # Check if checkbox is enabled
                             if not cb._props.get("disable", False):
-                                cb.set_value(e.value)
+                                cb.value = checked
 
                     return on_lang_check
 
-                lang_checkbox.on(
-                    "change",
+                lang_checkbox.on_value_change(
                     create_lang_handler(
+                        lang_code,
                         expansion,
                         resource_checkboxes_for_lang,
-                    ),
+                    )
                 )
 
             state["resource_checkboxes"] = selected_resources_list
