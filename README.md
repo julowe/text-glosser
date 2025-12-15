@@ -81,13 +81,15 @@ docker-compose up -d
 git clone https://github.com/julowe/text-glosser.git
 cd text-glosser
 
-# Install dependencies (Python 3.12+ required)
-pip install -r requirements.txt
+# Install package in editable mode (Python 3.12+ required)
+# This installs all runtime dependencies from pyproject.toml
+pip install -e .
 
 # For development with additional tools
-pip install -r requirements-dev.txt
-
-# Install package in editable mode
+pip install -e ".[dev]"
+# Or alternatively:
+# pip install -r requirements-dev.txt
+```
 pip install -e .
 ```
 

@@ -153,11 +153,20 @@ def create_main_page():
             grouped = registry.get_resources_grouped_by_language()
 
             selected_resources_list = []
+            language_checkboxes = {}  # Track language-level checkboxes
 
             for lang_code in sorted(grouped.keys()):
                 resources = grouped[lang_code]
 
-                with ui.expansion(f'Language: {lang_code}', icon='translate').classes('w-full'):
+                # Create a container for the language group
+                with ui.row().classes('w-full items-center gap-2'):
+                    # Master checkbox for the language group
+                    lang_checkbox = ui.checkbox(f'Select all {lang_code}', value=False)
+                    language_checkboxes[lang_code] = {'master': lang_checkbox, 'items': []}
+
+                with ui.expansion(f'Language: {lang_code}', icon='translate').classes('w-full') as expansion:
+                    resource_checkboxes_for_lang = []
+                    
                     for res in resources:
                         accessible = registry.verify_resource_accessible(res.id)
                         prefix = '[User]' if res.is_user_provided else '[Built-in]'
@@ -172,8 +181,30 @@ def create_main_page():
                             ui.label('⚠️ Not accessible').classes('text-red-500 text-sm')
 
                         selected_resources_list.append((checkbox, res.id))
+                        resource_checkboxes_for_lang.append(checkbox)
+                    
+                    language_checkboxes[lang_code]['items'] = resource_checkboxes_for_lang
+
+                # Connect master checkbox to expand and select all items
+                def create_lang_handler(lang_code, expansion_widget, checkboxes):
+                    def on_lang_check(e):
+                        # Expand the group when checked
+                        if e.value:
+                            expansion_widget.open()
+                        # Set all child checkboxes to the same value
+                        for cb in checkboxes:
+                            if not cb.props.get('disabled'):  # Only check enabled checkboxes
+                                cb.value = e.value
+                    return on_lang_check
+
+                lang_checkbox.on('change', create_lang_handler(
+                    lang_code, 
+                    expansion,
+                    resource_checkboxes_for_lang
+                ))
 
             state['resource_checkboxes'] = selected_resources_list
+            state['language_checkboxes'] = language_checkboxes
 
             # Upload dictionaries button
             ui.button('Upload Dictionaries/Resources', on_click=lambda: ui.notify('Dictionary upload coming soon!')).classes('mt-4')
@@ -392,5 +423,6 @@ def delete_session(session_id: str):
 # Initialize NiceGUI with FastAPI
 ui.run_with(
     app,
-    storage_secret='change-this-to-a-random-secret-key-in-production'
+    storage_secret='change-this-to-a-random-secret-key-in-production',
+    title='Text Glosser'
 )

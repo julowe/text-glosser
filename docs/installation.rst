@@ -23,13 +23,15 @@ Or use docker-compose::
 From Source
 -----------
 
-To install from source::
+To install from source using pyproject.toml (recommended)::
 
     git clone https://github.com/julowe/text-glosser.git
     cd text-glosser
     pip install -e .
 
-Or install just the dependencies::
+This will install the package and all runtime dependencies defined in ``pyproject.toml``.
+
+Alternatively, install just the dependencies using requirements.txt::
 
     pip install -r requirements.txt
 
@@ -37,12 +39,17 @@ Requirements
 ------------
 
 * Python 3.12 or higher
-* See ``requirements.txt`` and ``pyproject.toml`` for full list of dependencies
+* Dependencies are defined in ``pyproject.toml`` (preferred) or ``requirements.txt``
+* See the ``[project.dependencies]`` section in ``pyproject.toml`` for the full list
 
 Development Installation
 ------------------------
 
-For development, install additional dependencies::
+For development, install with the optional dev dependencies::
+
+    pip install -e ".[dev]"
+
+Or use the requirements-dev.txt file::
 
     pip install -r requirements-dev.txt
 
