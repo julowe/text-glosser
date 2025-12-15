@@ -19,6 +19,55 @@ from ..core.registry import get_registry
 from ..core.session import get_session_manager
 from ..utils.security import sanitize_filename, sanitize_session_id, sanitize_url
 
+# Language code to name mapping (ISO 639-1 codes)
+LANGUAGE_NAMES = {
+    "ar": "Arabic",
+    "en": "English",
+    "fr": "French",
+    "de": "German",
+    "el": "Greek",
+    "he": "Hebrew",
+    "la": "Latin",
+    "sa": "Sanskrit",
+    "zh": "Chinese",
+    "es": "Spanish",
+    "it": "Italian",
+    "pt": "Portuguese",
+    "ru": "Russian",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "hi": "Hindi",
+    "bn": "Bengali",
+    "pa": "Punjabi",
+    "te": "Telugu",
+    "mr": "Marathi",
+    "ta": "Tamil",
+    "ur": "Urdu",
+    "gu": "Gujarati",
+    "kn": "Kannada",
+    "ml": "Malayalam",
+    "or": "Odia",
+}
+
+def get_language_display_name(lang_code: str) -> str:
+    """
+    Get human-readable language name with code.
+
+    Parameters
+    ----------
+    lang_code : str
+        ISO 639 language code
+
+    Returns
+    -------
+    str
+        Display name like "Chinese (zh)" or just "(zh)" if name unknown
+    """
+    name = LANGUAGE_NAMES.get(lang_code)
+    if name:
+        return f"{name} ({lang_code})"
+    return f"({lang_code})"
+
 # Initialize FastAPI app
 app = FastAPI(title="Text Glosser", version="0.1.0")
 
@@ -157,17 +206,18 @@ def create_main_page():
 
             for lang_code in sorted(grouped.keys()):
                 resources = grouped[lang_code]
+                lang_display = get_language_display_name(lang_code)
 
                 # Create a container for the language group
                 with ui.row().classes("w-full items-center gap-2"):
                     # Master checkbox for the language group
-                    lang_checkbox = ui.checkbox(f"Select all {lang_code}", value=False)
+                    lang_checkbox = ui.checkbox(f"Select all {lang_display}", value=False)
                     language_checkboxes[lang_code] = {
                         "master": lang_checkbox,
                         "items": [],
                     }
 
-                with ui.expansion(f"Language: {lang_code}", icon="translate").classes(
+                with ui.expansion(f"Language: {lang_display}", icon="translate").classes(
                     "w-full"
                 ) as expansion:
                     resource_checkboxes_for_lang = []
@@ -192,24 +242,22 @@ def create_main_page():
                     )
 
                 # Connect master checkbox to expand and select all items
-                def create_lang_handler(lang_code, expansion_widget, checkboxes):
+                def create_lang_handler(expansion_widget, checkboxes):
                     def on_lang_check(e):
                         # Expand the group when checked
                         if e.value:
                             expansion_widget.open()
                         # Set all child checkboxes to the same value
                         for cb in checkboxes:
-                            if not cb.props.get(
-                                "disabled"
-                            ):  # Only check enabled checkboxes
-                                cb.value = e.value
+                            # Check if checkbox is enabled by looking at disabled property
+                            if not cb._props.get("disable", False):
+                                cb.set_value(e.value)
 
                     return on_lang_check
 
                 lang_checkbox.on(
                     "change",
                     create_lang_handler(
-                        lang_code,
                         expansion,
                         resource_checkboxes_for_lang,
                     ),
