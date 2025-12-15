@@ -5,16 +5,17 @@ This module defines the core data structures used throughout the application
 for representing dictionaries, resources, text sources, and analysis results.
 """
 
-from enum import Enum
-from typing import List, Optional, Dict, Any
 from datetime import datetime
+from enum import Enum
+from typing import Any
+
 from pydantic import BaseModel, Field, field_validator
 
 
 class LanguageCode(BaseModel):
     """
     Represents an ISO 639 language code.
-    
+
     Attributes
     ----------
     set1 : str
@@ -25,8 +26,8 @@ class LanguageCode(BaseModel):
         ISO 639-3 three-letter codes
     """
     set1: str = Field(..., min_length=2, max_length=2, description="ISO 639-1 code")
-    set2: Optional[List[str]] = Field(default=None, description="ISO 639-2 codes")
-    set3: Optional[List[str]] = Field(default=None, description="ISO 639-3 codes")
+    set2: list[str] | None = Field(default=None, description="ISO 639-2 codes")
+    set3: list[str] | None = Field(default=None, description="ISO 639-3 codes")
 
 
 class DictionaryFormat(str, Enum):
@@ -48,7 +49,7 @@ class ResourceType(str, Enum):
 class DictionaryResource(BaseModel):
     """
     Represents a dictionary or linguistic resource.
-    
+
     Attributes
     ----------
     id : str
@@ -79,18 +80,18 @@ class DictionaryResource(BaseModel):
     format: DictionaryFormat
     resource_type: ResourceType
     primary_language: str = Field(..., min_length=2, max_length=2)
-    secondary_languages: List[str] = Field(default_factory=list)
-    file_paths: Optional[List[str]] = None
-    source_url: Optional[str] = None
+    secondary_languages: list[str] = Field(default_factory=list)
+    file_paths: list[str] | None = None
+    source_url: str | None = None
     is_user_provided: bool = False
-    set2_codes: Optional[List[str]] = None
-    set3_codes: Optional[List[str]] = None
+    set2_codes: list[str] | None = None
+    set3_codes: list[str] | None = None
 
 
 class TextSource(BaseModel):
     """
     Represents a text source to be analyzed.
-    
+
     Attributes
     ----------
     id : str
@@ -108,13 +109,13 @@ class TextSource(BaseModel):
     name: str
     content: str
     source_type: str  # 'file' or 'url'
-    original_path: Optional[str] = None
+    original_path: str | None = None
 
 
 class WordDefinition(BaseModel):
     """
     Represents a word definition.
-    
+
     Attributes
     ----------
     word : str
@@ -127,15 +128,15 @@ class WordDefinition(BaseModel):
         Grammatical information if available
     """
     word: str
-    definitions: List[str]
+    definitions: list[str]
     source_dict: str
-    grammatical_info: Optional[Dict[str, Any]] = None
+    grammatical_info: dict[str, Any] | None = None
 
 
 class LineAnalysis(BaseModel):
     """
     Analysis results for a single line of text.
-    
+
     Attributes
     ----------
     line_number : int
@@ -144,13 +145,13 @@ class LineAnalysis(BaseModel):
         Analysis for each word in the line
     """
     line_number: int
-    words: List[WordDefinition]
+    words: list[WordDefinition]
 
 
 class TextAnalysis(BaseModel):
     """
     Complete analysis of a text source.
-    
+
     Attributes
     ----------
     source_id : str
@@ -174,16 +175,16 @@ class TextAnalysis(BaseModel):
     source_name: str
     total_lines: int
     total_words: int
-    dictionaries_used: List[str]
-    lines: List[LineAnalysis]
-    errors: List[str] = Field(default_factory=list)
+    dictionaries_used: list[str]
+    lines: list[LineAnalysis]
+    errors: list[str] = Field(default_factory=list)
     timestamp: datetime = Field(default_factory=datetime.now)
 
 
 class SessionConfig(BaseModel):
     """
     Configuration for a processing session.
-    
+
     Attributes
     ----------
     session_id : str
@@ -200,12 +201,12 @@ class SessionConfig(BaseModel):
         When the session was last accessed
     """
     session_id: str
-    text_sources: List[TextSource]
-    selected_resources: List[str]
-    retention_days: Optional[int] = 180
+    text_sources: list[TextSource]
+    selected_resources: list[str]
+    retention_days: int | None = 180
     created_at: datetime = Field(default_factory=datetime.now)
     last_accessed: datetime = Field(default_factory=datetime.now)
-    
+
     @field_validator('retention_days')
     @classmethod
     def validate_retention(cls, v):

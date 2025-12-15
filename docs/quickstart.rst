@@ -3,39 +3,61 @@
 Quick Start
 ===========
 
-This guide will help you get started with Text Glosser.
+This guide will help you get started with Text Glosser as an end user.
 
-CLI Quick Start
----------------
+Using Docker (Recommended)
+---------------------------
 
-List available dictionaries::
+The easiest way to use Text Glosser is with Docker::
 
-    text-glosser list-dictionaries
+    # Pull and run the latest version
+    docker pull ghcr.io/julowe/text-glosser:latest
+    docker run -p 8080:8080 ghcr.io/julowe/text-glosser:latest
 
-Process a text file::
+Then open http://localhost:8080 in your browser.
 
-    text-glosser process mytext.txt -r mw-sanskrit-english -o ./output
+Or use docker-compose (save this as ``docker-compose.yml``)::
 
-Process a URL::
+    version: '3.8'
+    
+    services:
+      text-glosser:
+        image: ghcr.io/julowe/text-glosser:latest
+        ports:
+          - "8080:8080"
+        volumes:
+          - text-glosser-data:/app/data
+        restart: unless-stopped
+    
+    volumes:
+      text-glosser-data:
 
-    text-glosser process https://example.com/article.html -r hanzipy-chinese
+Then run::
+
+    docker-compose up -d
 
 Web UI Quick Start
 ------------------
 
-Start the web server::
+1. Open http://localhost:8080 in your browser
+2. Select dictionaries/resources to use for your language
+3. Upload text files or enter URLs
+4. Click "Process Text"
+5. View and download results in Markdown, JSON, or CoNLL-U format
 
-    python -m uvicorn text_glosser.web.main:app --host 0.0.0.0 --port 8080
+CLI Quick Start
+---------------
 
-Then open http://localhost:8080 in your browser.
+If you've installed from source, you can use the CLI::
 
-Basic Workflow
---------------
+    # List available dictionaries
+    text-glosser list-dictionaries
 
-1. Select dictionaries/resources to use
-2. Upload text files or enter URLs
-3. Click "Process Text"
-4. View and download results
+    # Process a text file
+    text-glosser process mytext.txt -r mw-sanskrit-english -o ./output
+
+    # Process a URL
+    text-glosser process https://example.com/article.html -r hanzipy-chinese
 
 Output Formats
 --------------
@@ -43,5 +65,5 @@ Output Formats
 Text Glosser supports three output formats:
 
 * **Markdown**: Human-readable format with headers and lists
-* **JSON**: Machine-readable format with full metadata
+* **JSON**: Machine-readable format with full metadata and configuration for re-running analysis
 * **CoNLL-U**: Universal Dependencies format for linguistic analysis

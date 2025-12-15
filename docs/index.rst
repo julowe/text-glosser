@@ -15,8 +15,8 @@ dictionaries and resources.
    quickstart
    cli
    web_ui
-   api
    development
+   api
 
 Features
 --------

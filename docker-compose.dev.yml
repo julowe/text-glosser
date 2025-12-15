@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  text-glosser-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: text-glosser-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount source code for live development
+      - ./src:/app/src
+      - ./language_resources:/app/language_resources
+      # Persistent storage for user data
+      - text-glosser-dev-data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATA_DIR=/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  text-glosser-dev-data:
+    driver: local

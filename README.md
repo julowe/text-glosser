@@ -53,104 +53,79 @@ A comprehensive text analysis and glossing application that provides word-by-wor
 
 ## 🚀 Quick Start
 
-### Installation
+### Using Docker (Recommended for End Users)
+
+The easiest way to use Text Glosser is with Docker:
+
+```bash
+# Pull and run the latest version
+docker pull ghcr.io/julowe/text-glosser:latest
+docker run -p 8080:8080 ghcr.io/julowe/text-glosser:latest
+
+# Access the web UI at http://localhost:8080
+```
+
+Or use docker-compose:
+
+```bash
+# Pull the docker-compose.yml from the repository or create one:
+docker-compose up -d
+
+# Access at http://localhost:8080
+```
+
+### From Source (For Developers)
 
 ```bash
 # Clone the repository
 git clone https://github.com/julowe/text-glosser.git
 cd text-glosser
 
-# Install dependencies
+# Install dependencies (Python 3.12+ required)
 pip install -r requirements.txt
+
+# For development with additional tools
+pip install -r requirements-dev.txt
+
+# Install package in editable mode
+pip install -e .
 ```
 
-### Using Docker
+See the [Development Guide](docs/development.rst) for detailed setup instructions.
 
-```bash
-# Build the image
-docker build -t text-glosser .
+### Web UI Usage
 
-# Run with docker-compose
-docker-compose up -d
-
-# Access the web UI at http://localhost:8080
-```
+1. Open http://localhost:8080 in your browser
+2. **Select Dictionaries**: Choose one or more dictionaries organized by language
+3. **Upload Text**: Upload files or enter URLs
+4. **Process**: Click "Process Text" to analyze
+5. **Download Results**: Get results in Markdown, JSON, or CoNLL-U format
 
 ### CLI Usage
 
-#### List Available Dictionaries
+If installed from source:
 
 ```bash
-# List all dictionaries
-python -m text_glosser.cli.main list-dictionaries
+# List available dictionaries
+text-glosser list-dictionaries
 
 # List dictionaries for a specific language
-python -m text_glosser.cli.main list-dictionaries --language ar
+text-glosser list-dictionaries --language ar
 
-# JSON output
-python -m text_glosser.cli.main list-dictionaries --format json
-```
-
-#### Process Text
-
-```bash
 # Process a file with a specific dictionary
-python -m text_glosser.cli.main process mytext.txt -r mw-sanskrit-english -o ./results
+text-glosser process mytext.txt -r mw-sanskrit-english -o ./results
 
 # Process multiple files with multiple dictionaries
-python -m text_glosser.cli.main process file1.txt file2.txt \
+text-glosser process file1.txt file2.txt \
     -r mw-sanskrit-english \
     -r lane-arabic-english \
     -o ./output
 
 # Process a URL
-python -m text_glosser.cli.main process https://example.com/article.html \
+text-glosser process https://example.com/article.html \
     -r hanzipy-chinese \
     -o ./output
-
-# Skip preview
-python -m text_glosser.cli.main process mytext.txt \
-    -r mw-sanskrit-english \
-    --no-preview
-
-# Specific output format
-python -m text_glosser.cli.main process mytext.txt \
-    -r mw-sanskrit-english \
-    --format json
 ```
-
-### Web UI Usage
-
-```bash
-# Start the web server
-python -m uvicorn text_glosser.web.main:app --host 0.0.0.0 --port 8080
-
-# Access at http://localhost:8080
-```
-
-#### Web UI Workflow
-
-1. **Configure Session Settings**
-   - Set data retention period (0-365 days, or indefinite)
-   
-2. **Select Dictionaries**
-   - Browse dictionaries organized by language
-   - Select one or more resources for analysis
-   - Upload custom dictionaries (coming soon)
-
-3. **Upload Text Sources**
-   - Upload text files (drag and drop supported)
-   - Enter URLs for web content extraction
-
-4. **Process**
-   - Click "Process Text" to analyze
-   - View results in the web interface
-   - Download results as ZIP file
-
-5. **Session Management**
-   - Sessions are saved with unique IDs
-   - Results accessible via session URL
-   - Data automatically cleaned up based on retention policy
 
 ## 📖 Output Formats
 
@@ -271,37 +246,100 @@ text-glosser/
 
 ## 🧪 Development
 
+For detailed development instructions, see the [Development Guide](docs/development.rst).
+
+### Quick Development Setup
+
+```bash
+# Clone repository
+git clone https://github.com/julowe/text-glosser.git
+cd text-glosser
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Install package in editable mode
+pip install -e .
+```
+
+### Running Locally
+
+**Web UI (with auto-reload):**
+```bash
+uvicorn text_glosser.web.main:app --reload --host 0.0.0.0 --port 8080
+```
+
+**CLI:**
+```bash
+text-glosser list-dictionaries
+text-glosser process mytext.txt -r mw-sanskrit-english -o ./output
+```
+
+### Docker Development
+
+```bash
+# Build and run locally
+docker-compose -f docker-compose.dev.yml up --build
+
+# Or build manually
+docker build -t text-glosser:dev .
+docker run -p 8080:8080 text-glosser:dev
+```
+
 ### Running Tests
 
 ```bash
-# Install test dependencies
-pip install pytest pytest-asyncio pytest-cov
-
-# Run tests
-pytest
+# Run all tests
+PYTHONPATH=src pytest
 
 # With coverage
-pytest --cov=text_glosser --cov-report=html
+PYTHONPATH=src pytest --cov=text_glosser --cov-report=html
+
+# Run specific tests
+PYTHONPATH=src pytest tests/unit/test_models.py
 ```
 
 ### Code Quality
 
 ```bash
-# Format code
-black src/
+# Lint with ruff
+ruff check src/ tests/
 
-# Lint
-ruff check src/
+# Auto-fix issues
+ruff check --fix src/ tests/
 
 # Type checking
-mypy src/
+mypy src/ --ignore-missing-imports
 ```
 
-### Adding New Dictionaries
+### Project Structure
 
-1. Place dictionary files in `language_resources/<ISO-639-1-code>/`
-2. Update `registry.py` to register the new resource
-3. Implement parser if new format (see `parsers/` directory)
+```
+text-glosser/
+├── src/text_glosser/      # Source code
+│   ├── core/              # Core processing logic
+│   ├── cli/               # CLI interface
+│   ├── web/               # Web interface
+│   └── utils/             # Utilities
+├── tests/                 # Test suite
+├── docs/                  # Sphinx documentation
+├── language_resources/    # Built-in dictionaries
+├── requirements.txt       # Runtime dependencies
+└── requirements-dev.txt   # Development dependencies
+```
+
+### Dependencies
+
+The project uses two requirements files:
+
+- **requirements.txt**: Runtime dependencies only (for Docker and end users)
+- **requirements-dev.txt**: Development dependencies (testing, docs, linting)
+
+Both files are referenced in **pyproject.toml** for tool configuration.
 
 ## 📝 Documentation Style
 

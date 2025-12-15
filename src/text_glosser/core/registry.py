@@ -5,20 +5,18 @@ This module manages the registration and retrieval of linguistic resources,
 including built-in dictionaries and user-uploaded resources.
 """
 
-import os
-import json
 from pathlib import Path
-from typing import List, Dict, Optional
-from ..core.models import DictionaryResource, DictionaryFormat, ResourceType
+
+from ..core.models import DictionaryFormat, DictionaryResource, ResourceType
 
 
 class ResourceRegistry:
     """
     Registry for managing linguistic resources and dictionaries.
-    
+
     This class provides methods to register, retrieve, and manage
     dictionaries and linguistic resources organized by language.
-    
+
     Attributes
     ----------
     resources : Dict[str, DictionaryResource]
@@ -26,20 +24,20 @@ class ResourceRegistry:
     resources_dir : Path
         Base directory for resource files
     """
-    
+
     def __init__(self, resources_dir: str = "./language_resources"):
         """
         Initialize the resource registry.
-        
+
         Parameters
         ----------
         resources_dir : str, optional
             Path to the resources directory (default: "./language_resources")
         """
-        self.resources: Dict[str, DictionaryResource] = {}
+        self.resources: dict[str, DictionaryResource] = {}
         self.resources_dir = Path(resources_dir)
         self._load_builtin_resources()
-    
+
     def _load_builtin_resources(self):
         """Load built-in resources from the language_resources directory."""
         # StarDict - Monier-Williams Sanskrit-English
@@ -60,7 +58,7 @@ class ResourceRegistry:
                 source_url="https://www.sanskrit-lexicon.uni-koeln.de/",
                 is_user_provided=False
             ))
-        
+
         # StarDict - Lane's Arabic-English Lexicon
         lane_path = self.resources_dir / "ar" / "lane-lexicon"
         if lane_path.exists():
@@ -78,7 +76,7 @@ class ResourceRegistry:
                 ],
                 is_user_provided=False
             ))
-        
+
         # StarDict - Salmone's Arabic-English Lexicon
         salmone_path = self.resources_dir / "ar" / "salmone-lexicon"
         if salmone_path.exists():
@@ -96,7 +94,7 @@ class ResourceRegistry:
                 ],
                 is_user_provided=False
             ))
-        
+
         # hanzipy library
         self.register_resource(DictionaryResource(
             id="hanzipy-chinese",
@@ -108,43 +106,43 @@ class ResourceRegistry:
             is_user_provided=False,
             source_url="https://pypi.org/project/hanzipy/"
         ))
-    
+
     def register_resource(self, resource: DictionaryResource):
         """
         Register a new resource.
-        
+
         Parameters
         ----------
         resource : DictionaryResource
             The resource to register
         """
         self.resources[resource.id] = resource
-    
-    def get_resource(self, resource_id: str) -> Optional[DictionaryResource]:
+
+    def get_resource(self, resource_id: str) -> DictionaryResource | None:
         """
         Get a resource by ID.
-        
+
         Parameters
         ----------
         resource_id : str
             The resource ID
-        
+
         Returns
         -------
         Optional[DictionaryResource]
             The resource if found, None otherwise
         """
         return self.resources.get(resource_id)
-    
-    def get_resources_by_language(self, language_code: str) -> List[DictionaryResource]:
+
+    def get_resources_by_language(self, language_code: str) -> list[DictionaryResource]:
         """
         Get all resources for a specific language.
-        
+
         Parameters
         ----------
         language_code : str
             ISO 639 language code
-        
+
         Returns
         -------
         List[DictionaryResource]
@@ -154,11 +152,11 @@ class ResourceRegistry:
             res for res in self.resources.values()
             if res.primary_language == language_code
         ]
-    
-    def get_all_languages(self) -> List[str]:
+
+    def get_all_languages(self) -> list[str]:
         """
         Get all language codes that have resources.
-        
+
         Returns
         -------
         List[str]
@@ -168,12 +166,12 @@ class ResourceRegistry:
         for res in self.resources.values():
             languages.add(res.primary_language)
             languages.update(res.secondary_languages)
-        return sorted(list(languages))
-    
-    def get_resources_grouped_by_language(self) -> Dict[str, List[DictionaryResource]]:
+        return sorted(languages)
+
+    def get_resources_grouped_by_language(self) -> dict[str, list[DictionaryResource]]:
         """
         Get all resources grouped by primary language.
-        
+
         Returns
         -------
         Dict[str, List[DictionaryResource]]
@@ -186,27 +184,27 @@ class ResourceRegistry:
                 grouped[lang] = []
             grouped[lang].append(res)
         return grouped
-    
-    def get_all_resources(self) -> List[DictionaryResource]:
+
+    def get_all_resources(self) -> list[DictionaryResource]:
         """
         Get all registered resources.
-        
+
         Returns
         -------
         List[DictionaryResource]
             List of all resources
         """
         return list(self.resources.values())
-    
+
     def verify_resource_accessible(self, resource_id: str) -> bool:
         """
         Verify that a resource's files are accessible.
-        
+
         Parameters
         ----------
         resource_id : str
             The resource ID to verify
-        
+
         Returns
         -------
         bool
@@ -215,31 +213,31 @@ class ResourceRegistry:
         resource = self.get_resource(resource_id)
         if not resource:
             return False
-        
+
         # Library-based resources don't have files
         if resource.resource_type == ResourceType.LIBRARY:
             return True
-        
+
         # Check if all files exist
         if resource.file_paths:
             return all(Path(fp).exists() for fp in resource.file_paths)
-        
+
         return True
 
 
 # Global registry instance
-_global_registry: Optional[ResourceRegistry] = None
+_global_registry: ResourceRegistry | None = None
 
 
 def get_registry(resources_dir: str = "./language_resources") -> ResourceRegistry:
     """
     Get or create the global resource registry instance.
-    
+
     Parameters
     ----------
     resources_dir : str, optional
         Path to resources directory (default: "./language_resources")
-    
+
     Returns
     -------
     ResourceRegistry

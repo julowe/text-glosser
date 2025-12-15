@@ -4,29 +4,20 @@ Web UI for text-glosser using FastAPI and NiceGUI.
 This module provides the web interface for the text-glosser application.
 """
 
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from nicegui import ui, app as nicegui_app
-from pathlib import Path
-from typing import List, Optional
-import tempfile
 import shutil
 import uuid
-import zipfile
-import io
+from pathlib import Path
 
+from fastapi import FastAPI
+from nicegui import ui
+
+from ..core.exporters import export_all_formats
+from ..core.ingestion import fetch_url, read_file
+from ..core.models import TextSource
+from ..core.processor import TextProcessor
 from ..core.registry import get_registry
 from ..core.session import get_session_manager
-from ..core.models import TextSource, DictionaryResource, DictionaryFormat, ResourceType
-from ..core.ingestion import read_file, fetch_url, validate_source_accessible
-from ..core.processor import TextProcessor
-from ..core.exporters import export_all_formats
-from ..utils.security import (
-    sanitize_filename, sanitize_session_id, validate_iso_639_codes,
-    validate_retention_days, sanitize_text_content, sanitize_url
-)
-
+from ..utils.security import sanitize_filename, sanitize_session_id, sanitize_url
 
 # Initialize FastAPI app
 app = FastAPI(title="Text Glosser", version="0.1.0")
@@ -53,13 +44,13 @@ async def health_check():
 
 
 @app.get("/api/dictionaries")
-async def get_dictionaries(language: Optional[str] = None):
+async def get_dictionaries(language: str | None = None):
     """Get list of available dictionaries."""
     if language:
         resources = registry.get_resources_by_language(language)
     else:
         resources = registry.get_all_resources()
-    
+
     return {
         "dictionaries": [
             {
@@ -81,16 +72,16 @@ async def get_dictionaries(language: Optional[str] = None):
 async def get_languages():
     """Get list of languages that have resources."""
     languages = registry.get_all_languages()
-    
+
     # Prioritized languages list
     priority_languages = [
         "ar", "en", "fr", "de", "el", "he", "la", "sa", "zh"
     ]
-    
+
     # Separate into priority and other
     priority = [lang for lang in priority_languages if lang in languages]
     other = sorted([lang for lang in languages if lang not in priority_languages])
-    
+
     return {
         "priority": priority,
         "other": other,
@@ -101,7 +92,7 @@ async def get_languages():
 # NiceGUI UI
 def create_main_page():
     """Create the main landing page."""
-    
+
     # State management
     state = {
         'selected_resources': [],
@@ -111,18 +102,18 @@ def create_main_page():
         'session_id': None,
         'text_sources': []
     }
-    
+
     with ui.column().classes('w-full max-w-6xl mx-auto p-4'):
         # Header
         ui.markdown('# Text Glosser')
         ui.markdown('Analyze text using linguistic dictionaries and resources')
-        
+
         ui.separator()
-        
+
         # Session settings
         with ui.card().classes('w-full'):
             ui.markdown('## Session Settings')
-            
+
             with ui.row().classes('w-full items-center gap-4'):
                 retention_enabled = ui.checkbox('Delete my data after inactive days:', value=True)
                 retention_input = ui.number(
@@ -132,7 +123,7 @@ def create_main_page():
                     max=365,
                     step=1
                 ).classes('w-32')
-                
+
                 def on_retention_toggle(e):
                     if not e.value:
                         # Disabled
@@ -143,80 +134,80 @@ def create_main_page():
                         if retention_input.value == 0:
                             retention_input.value = 180
                         retention_input.enable()
-                
+
                 def on_retention_change(e):
                     if e.value == 0:
                         retention_enabled.value = False
                         retention_input.disable()
-                
+
                 retention_enabled.on('change', on_retention_toggle)
                 retention_input.on('change', on_retention_change)
-        
+
         ui.separator()
-        
+
         # Dictionary selection
         with ui.card().classes('w-full'):
             ui.markdown('## Select Dictionaries and Resources')
-            
+
             # Group by language
             grouped = registry.get_resources_grouped_by_language()
-            
+
             selected_resources_list = []
-            
+
             for lang_code in sorted(grouped.keys()):
                 resources = grouped[lang_code]
-                
+
                 with ui.expansion(f'Language: {lang_code}', icon='translate').classes('w-full'):
                     for res in resources:
                         accessible = registry.verify_resource_accessible(res.id)
                         prefix = '[User]' if res.is_user_provided else '[Built-in]'
-                        
+
                         checkbox = ui.checkbox(
                             f'{prefix} {res.name} ({res.format.value})',
                             value=False
                         )
-                        
+
                         if not accessible:
                             checkbox.disable()
                             ui.label('⚠️ Not accessible').classes('text-red-500 text-sm')
-                        
+
                         selected_resources_list.append((checkbox, res.id))
-            
+
             state['resource_checkboxes'] = selected_resources_list
-            
+
             # Upload dictionaries button
             ui.button('Upload Dictionaries/Resources', on_click=lambda: ui.notify('Dictionary upload coming soon!')).classes('mt-4')
-        
+
         ui.separator()
-        
+
         # Text source input
         with ui.card().classes('w-full'):
             ui.markdown('## Text Sources')
-            
+
             # File upload
             ui.markdown('### Upload Files')
-            file_upload = ui.upload(
+            ui.upload(
                 label='Upload text files',
                 multiple=True,
                 on_upload=lambda e: handle_file_upload(e, state)
             ).classes('w-full')
-            
+
             # URL input
             ui.markdown('### Or Enter URLs')
             url_input = ui.textarea(
                 'URLs (one per line)',
                 placeholder='https://example.com/text1\nhttps://example.com/text2'
             ).classes('w-full')
-            
-            add_urls_btn = ui.button(
+
+            ui.button(
                 'Add URLs',
                 on_click=lambda: handle_url_input(url_input.value, state)
             )
-        
+
         # Process button
         ui.separator()
-        
-        process_btn = ui.button(
+
+        ui.button(
             'Process Text',
             on_click=lambda: process_text(state),
             color='primary'
@@ -230,10 +221,10 @@ def handle_file_upload(event, state):
         file_path = UPLOADS_DIR / sanitize_filename(event.name)
         with open(file_path, 'wb') as f:
             f.write(event.content.read())
-        
+
         # Read content
         content = read_file(str(file_path))
-        
+
         # Create TextSource
         text_source = TextSource(
             id=str(uuid.uuid4()),
@@ -242,10 +233,10 @@ def handle_file_upload(event, state):
             source_type='file',
             original_path=str(file_path)
         )
-        
+
         state['text_sources'].append(text_source)
         ui.notify(f'Uploaded: {event.name}', type='positive')
-        
+
     except Exception as e:
         ui.notify(f'Error uploading file: {e}', type='negative')
 
@@ -255,9 +246,9 @@ def handle_url_input(urls_text, state):
     if not urls_text:
         ui.notify('Please enter at least one URL', type='warning')
         return
-    
+
     urls = [url.strip() for url in urls_text.split('\n') if url.strip()]
-    
+
     for url in urls:
         try:
             # Validate and fetch
@@ -265,9 +256,9 @@ def handle_url_input(urls_text, state):
             if not clean_url:
                 ui.notify(f'Invalid URL: {url}', type='negative')
                 continue
-            
+
             content = fetch_url(clean_url)
-            
+
             # Create TextSource
             text_source = TextSource(
                 id=str(uuid.uuid4()),
@@ -276,10 +267,10 @@ def handle_url_input(urls_text, state):
                 source_type='url',
                 original_path=url
             )
-            
+
             state['text_sources'].append(text_source)
             ui.notify(f'Added URL: {url}', type='positive')
-            
+
         except Exception as e:
             ui.notify(f'Error fetching {url}: {e}', type='negative')
 
@@ -291,15 +282,15 @@ def process_text(state):
         res_id for checkbox, res_id in state.get('resource_checkboxes', [])
         if checkbox.value
     ]
-    
+
     if not selected_resources:
         ui.notify('Please select at least one dictionary/resource', type='warning')
         return
-    
+
     if not state.get('text_sources'):
         ui.notify('Please upload files or enter URLs', type='warning')
         return
-    
+
     try:
         # Create session
         session = session_manager.create_session(
@@ -307,26 +298,26 @@ def process_text(state):
             selected_resources=selected_resources,
             retention_days=state.get('retention_days')
         )
-        
+
         # Process each text source
         results = []
         for text_source in state['text_sources']:
             analysis = processor.analyze_text(text_source, selected_resources)
             results.append(analysis)
-        
+
         # Export results
         output_dir = RESULTS_DIR / session.session_id
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         for i, analysis in enumerate(results):
             base_filename = Path(state['text_sources'][i].name).stem
             export_all_formats(analysis, str(output_dir), base_filename)
-        
+
         ui.notify(f'Processing complete! Session ID: {session.session_id}', type='positive')
-        
+
         # Navigate to results page
         ui.navigate.to(f'/results/{session.session_id}')
-        
+
     except Exception as e:
         ui.notify(f'Error processing text: {e}', type='negative')
         import traceback
@@ -346,24 +337,24 @@ def results_page(session_id: str):
     if not session_id:
         ui.label('Invalid session ID')
         return
-    
+
     session = session_manager.get_session(session_id)
     if not session:
         ui.label('Session not found')
         return
-    
+
     with ui.column().classes('w-full max-w-6xl mx-auto p-4'):
         ui.markdown(f'# Results - Session {session_id}')
-        
+
         ui.button('Back to Home', on_click=lambda: ui.navigate.to('/')).classes('mb-4')
-        
+
         # Show results
         results_dir = RESULTS_DIR / session_id
         if results_dir.exists():
             files = list(results_dir.glob('*'))
-            
+
             ui.markdown(f'## Files ({len(files)})')
-            
+
             for file_path in files:
                 with ui.row().classes('items-center gap-2'):
                     ui.label(file_path.name)
@@ -371,7 +362,7 @@ def results_page(session_id: str):
                         'Download',
                         on_click=lambda fp=file_path: ui.download(str(fp))
                     )
-        
+
         # Delete session button
         ui.separator()
         ui.button(
@@ -385,15 +376,15 @@ def delete_session(session_id: str):
     """Delete a session."""
     try:
         session_manager.delete_session(session_id)
-        
+
         # Delete results
         results_dir = RESULTS_DIR / session_id
         if results_dir.exists():
             shutil.rmtree(results_dir)
-        
+
         ui.notify('Session deleted', type='positive')
         ui.navigate.to('/')
-        
+
     except Exception as e:
         ui.notify(f'Error deleting session: {e}', type='negative')
 

@@ -1,30 +1,32 @@
 """Unit tests for core models."""
 
-import pytest
 from datetime import datetime
+
+import pytest
+
 from text_glosser.core.models import (
-    LanguageCode,
-    DictionaryResource,
     DictionaryFormat,
+    DictionaryResource,
+    LanguageCode,
+    LineAnalysis,
     ResourceType,
+    SessionConfig,
+    TextAnalysis,
     TextSource,
     WordDefinition,
-    LineAnalysis,
-    TextAnalysis,
-    SessionConfig
 )
 
 
 class TestLanguageCode:
     """Tests for LanguageCode model."""
-    
+
     def test_create_simple(self):
         """Test creating a simple language code."""
         lang = LanguageCode(set1="en")
         assert lang.set1 == "en"
         assert lang.set2 is None
         assert lang.set3 is None
-    
+
     def test_create_with_all_codes(self):
         """Test creating with all code sets."""
         lang = LanguageCode(
@@ -39,7 +41,7 @@ class TestLanguageCode:
 
 class TestDictionaryResource:
     """Tests for DictionaryResource model."""
-    
+
     def test_create_stardict_resource(self):
         """Test creating a StarDict resource."""
         res = DictionaryResource(
@@ -54,7 +56,7 @@ class TestDictionaryResource:
         assert res.id == "test-dict"
         assert res.format == DictionaryFormat.STARDICT
         assert res.is_user_provided is False
-    
+
     def test_user_provided_resource(self):
         """Test marking resource as user-provided."""
         res = DictionaryResource(
@@ -70,7 +72,7 @@ class TestDictionaryResource:
 
 class TestTextSource:
     """Tests for TextSource model."""
-    
+
     def test_create_file_source(self):
         """Test creating a file source."""
         source = TextSource(
@@ -82,7 +84,7 @@ class TestTextSource:
         )
         assert source.source_type == "file"
         assert source.content == "Hello, world!"
-    
+
     def test_create_url_source(self):
         """Test creating a URL source."""
         source = TextSource(
@@ -97,7 +99,7 @@ class TestTextSource:
 
 class TestWordDefinition:
     """Tests for WordDefinition model."""
-    
+
     def test_create_simple_definition(self):
         """Test creating a simple word definition."""
         word_def = WordDefinition(
@@ -108,7 +110,7 @@ class TestWordDefinition:
         assert word_def.word == "karma"
         assert len(word_def.definitions) == 2
         assert word_def.grammatical_info is None
-    
+
     def test_with_grammatical_info(self):
         """Test definition with grammatical information."""
         word_def = WordDefinition(
@@ -122,7 +124,7 @@ class TestWordDefinition:
 
 class TestLineAnalysis:
     """Tests for LineAnalysis model."""
-    
+
     def test_create_line_analysis(self):
         """Test creating line analysis."""
         word_def = WordDefinition(
@@ -140,7 +142,7 @@ class TestLineAnalysis:
 
 class TestTextAnalysis:
     """Tests for TextAnalysis model."""
-    
+
     def test_create_analysis(self):
         """Test creating text analysis."""
         word_def = WordDefinition(
@@ -149,7 +151,7 @@ class TestTextAnalysis:
             source_dict="dict-1"
         )
         line = LineAnalysis(line_number=1, words=[word_def])
-        
+
         analysis = TextAnalysis(
             source_id="src-1",
             source_name="test.txt",
@@ -158,7 +160,7 @@ class TestTextAnalysis:
             dictionaries_used=["dict-1"],
             lines=[line]
         )
-        
+
         assert analysis.source_name == "test.txt"
         assert analysis.total_words == 1
         assert len(analysis.errors) == 0
@@ -167,7 +169,7 @@ class TestTextAnalysis:
 
 class TestSessionConfig:
     """Tests for SessionConfig model."""
-    
+
     def test_create_session(self):
         """Test creating a session config."""
         source = TextSource(
@@ -176,19 +178,19 @@ class TestSessionConfig:
             content="content",
             source_type="file"
         )
-        
+
         session = SessionConfig(
             session_id="test-session-123",
             text_sources=[source],
             selected_resources=["dict-1", "dict-2"],
             retention_days=180
         )
-        
+
         assert session.session_id == "test-session-123"
         assert len(session.text_sources) == 1
         assert session.retention_days == 180
         assert isinstance(session.created_at, datetime)
-    
+
     def test_indefinite_retention(self):
         """Test session with indefinite retention."""
         session = SessionConfig(
@@ -198,7 +200,7 @@ class TestSessionConfig:
             retention_days=None
         )
         assert session.retention_days is None
-    
+
     def test_invalid_retention_days(self):
         """Test invalid retention days raises error."""
         with pytest.raises(ValueError, match="between 0 and 365"):

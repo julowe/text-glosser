@@ -19,7 +19,7 @@ setup(
     url="https://github.com/julowe/text-glosser",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    python_requires=">=3.11",
+    python_requires=">=3.12",
     install_requires=[
         "fastapi>=0.104.0",
         "nicegui>=1.4.0",
@@ -47,7 +47,6 @@ setup(
             "sphinx-rtd-theme>=1.3.0",
             "ruff>=0.1.0",
             "mypy>=1.7.0",
-            "black>=23.11.0",
         ],
     },
     entry_points={

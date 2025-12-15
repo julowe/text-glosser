@@ -3,12 +3,22 @@
 Installation
 ============
 
-Using pip
----------
+Text Glosser is not yet available on PyPI. You can install it using Docker or from source.
 
-The easiest way to install Text Glosser is using pip::
+Using Docker (Recommended)
+--------------------------
 
-    pip install text-glosser
+The easiest way to run Text Glosser is using Docker::
+
+    docker pull ghcr.io/julowe/text-glosser:latest
+    docker run -p 8080:8080 ghcr.io/julowe/text-glosser:latest
+
+Then open http://localhost:8080 in your browser.
+
+Or use docker-compose::
+
+    # Create a docker-compose.yml file or use the one from the repository
+    docker-compose up -d
 
 From Source
 -----------
@@ -19,20 +29,21 @@ To install from source::
     cd text-glosser
     pip install -e .
 
-Using Docker
-------------
+Or install just the dependencies::
 
-You can also run Text Glosser using Docker::
-
-    docker pull ghcr.io/julowe/text-glosser:latest
-    docker run -p 8080:8080 ghcr.io/julowe/text-glosser:latest
-
-Or use docker-compose::
-
-    docker-compose up -d
+    pip install -r requirements.txt
 
 Requirements
 ------------
 
-* Python 3.11 or higher
-* See requirements.txt for full list of dependencies
+* Python 3.12 or higher
+* See ``requirements.txt`` and ``pyproject.toml`` for full list of dependencies
+
+Development Installation
+------------------------
+
+For development, install additional dependencies::
+
+    pip install -r requirements-dev.txt
+
+This includes testing tools, documentation builders, and code quality tools.

@@ -38,8 +38,10 @@ exclude_lines = [
 #include = '\.pyi?$'
 
 [tool.ruff]
-#line-length = 100
-target-version = "py311"
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -49,12 +51,12 @@ select = [
     "C4", # flake8-comprehensions
     "UP", # pyupgrade
 ]
-#ignore = [
-#    "E501",  # line too long (handled by black)
-#]
+ignore = [
+    "E501",  # line too long
+]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
