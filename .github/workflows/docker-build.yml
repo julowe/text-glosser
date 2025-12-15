@@ -46,6 +46,9 @@ jobs:
           type=semver,pattern={{major}}.{{minor}}
           type=sha
 
+    - name: Create annotation for debug message of tags
+      run: echo "::debug::${{ steps.meta.outputs.tags }}"
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
@@ -56,13 +59,13 @@ jobs:
 
     # random try from: https://stackoverflow.com/a/79695712
     - name: Pull Docker image
-      run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+      run: docker pull ${{ steps.meta.outputs.tags }}
 
     - name: Run Trivy vulnerability scanner
       if: github.event_name != 'pull_request'
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        image-ref: ${{ steps.meta.outputs.tags }}
         format: 'sarif'
         output: 'trivy-results.sarif'
 
