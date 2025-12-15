@@ -9,8 +9,9 @@ Prerequisites
 -------------
 
 * Python 3.12 or higher
-* Git
-* Docker (optional, for container development)
+* python3-pip
+* git
+* docker (optional, for container development)
 
 Setting Up Development Environment
 -----------------------------------
@@ -28,13 +29,9 @@ Clone and Install
     python -m venv venv
     source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-3. Install development dependencies::
+3. Install the package in editable mode with development dependencies::
 
-    pip install -r requirements-dev.txt
-
-4. Install the package in editable mode::
-
-    pip install -e .
+    pip install -e .[dev]
 
 Running the Application
 -----------------------
@@ -179,6 +176,7 @@ Project Structure
     ├── pyproject.toml          # Tool configuration
     ├── setup.py                # Package setup
     ├── Dockerfile              # Production container
+    ├── docker-compose.yml      # Production container
     └── docker-compose.dev.yml  # Development container
 
 Adding New Features
