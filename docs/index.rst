@@ -1,11 +1,9 @@
 Text Glosser Documentation
 ==========================
 
-Welcome to the Text Glosser documentation!
-
-Text Glosser is a comprehensive text analysis and glossing application that provides 
-word-by-word definitions and grammatical information using multiple linguistic 
-dictionaries and resources.
+The Text Glosser web app and CLI aim to be a comprehensive text analysis and 
+glossing utility that provide word-by-word definitions and grammatical 
+information using multiple linguistic dictionaries and resources.
 
 .. toctree::
    :maxdepth: 2
