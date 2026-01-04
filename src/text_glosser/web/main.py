@@ -446,7 +446,7 @@ def process_text(state):
 def display_interactive_results(json_file: Path, session):
     """
     Display interactive analysis results with dictionary filtering.
-    
+
     Parameters
     ----------
     json_file : Path
@@ -455,105 +455,114 @@ def display_interactive_results(json_file: Path, session):
         Session configuration
     """
     import json
-    
+
     # Load analysis data
     try:
-        with open(json_file, 'r', encoding='utf-8') as f:
+        with open(json_file, encoding="utf-8") as f:
             analysis_data = json.load(f)
     except Exception as e:
         ui.notify(f"Error loading analysis: {e}", type="negative")
         return
-    
-    metadata = analysis_data.get('metadata', {})
-    lines_data = analysis_data.get('lines', [])
-    dictionaries_used = metadata.get('dictionaries_used', [])
-    
+
+    metadata = analysis_data.get("metadata", {})
+    lines_data = analysis_data.get("lines", [])
+    dictionaries_used = metadata.get("dictionaries_used", [])
+
     if not dictionaries_used:
         ui.label("No dictionaries were used in this analysis")
         return
-    
+
     # Create a card for this file's results
     with ui.card().classes("w-full p-4 mb-4"):
         ui.markdown(f"### {metadata.get('source_name', 'Unknown')}")
-        ui.label(f"Lines: {metadata.get('total_lines', 0)}, Words: {metadata.get('total_words', 0)}")
-        
+        total_lines = metadata.get("total_lines", 0)
+        total_words = metadata.get("total_words", 0)
+        ui.label(f"Lines: {total_lines}, Words: {total_words}")
+
         # Dictionary filter checkboxes
         ui.markdown("#### Show/Hide Dictionary Results")
-        
-        # State for tracking which dictionaries are visible
-        visibility_state = {dict_id: True for dict_id in dictionaries_used}
-        
+
         with ui.row().classes("gap-4 flex-wrap"):
             checkboxes = {}
             for dict_id in dictionaries_used:
                 # Get dictionary name from registry
                 resource = registry.get_resource(dict_id)
                 dict_name = resource.name if resource else dict_id
-                
+
                 checkbox = ui.checkbox(dict_name, value=True)
                 checkboxes[dict_id] = checkbox
-        
+
         ui.separator()
-        
+
         # Container for the glossed text
         with ui.column().classes("w-full mt-4"):
             # Display each line
             for line_data in lines_data:
-                line_num = line_data.get('line_number', 0)
-                words_data = line_data.get('words', [])
-                
+                line_num = line_data.get("line_number", 0)
+                words_data = line_data.get("words", [])
+
                 if not words_data:
                     continue
-                
+
                 with ui.card().classes("w-full p-3 mb-2 bg-gray-50"):
-                    ui.label(f"Line {line_num}").classes("font-bold text-sm text-gray-600 mb-2")
-                    
+                    line_label = f"Line {line_num}"
+                    ui.label(line_label).classes("font-bold text-sm text-gray-600 mb-2")
+
                     # Create word-by-word display
                     # Group words by their original word text
-                    words_by_text = {}
+                    words_by_text: dict[str, list] = {}
                     for word_data in words_data:
-                        word_text = word_data.get('word', '')
+                        word_text = word_data.get("word", "")
                         if word_text not in words_by_text:
                             words_by_text[word_text] = []
                         words_by_text[word_text].append(word_data)
-                    
+
                     # Display words in a flex row
                     with ui.row().classes("gap-6 flex-wrap"):
                         for word_text, word_entries in words_by_text.items():
-                            # Create a column for each word with its definitions below
+                            # Create a column for each word
                             with ui.column().classes("items-start"):
                                 # Original word at top
-                                ui.label(word_text).classes("font-bold text-lg mb-1")
-                                
+                                word_label = ui.label(word_text)
+                                word_label.classes("font-bold text-lg mb-1")
+
                                 # Definitions from each dictionary below
                                 for word_entry in word_entries:
-                                    dict_id = word_entry.get('source_dict', '')
-                                    definitions = word_entry.get('definitions', [])
-                                    
+                                    dict_id = word_entry.get("source_dict", "")
+                                    definitions = word_entry.get("definitions", [])
+
                                     # Get dictionary name
                                     resource = registry.get_resource(dict_id)
                                     dict_name = resource.name if resource else dict_id
-                                    
-                                    # Create a container for this dictionary's definitions
-                                    # Use data-dict attribute for filtering
-                                    def_container = ui.column().classes(f"dict-{dict_id} mb-1")
-                                    
+
+                                    # Container for dictionary definitions
+                                    def_container = ui.column()
+                                    def_container.classes(f"dict-{dict_id} mb-1")
+
                                     with def_container:
                                         # Dictionary name (small)
-                                        ui.label(f"[{dict_name}]").classes("text-xs text-gray-500")
-                                        
-                                        # Definitions
-                                        for def_text in definitions[:3]:  # Limit to first 3 for readability
-                                            ui.label(f"• {def_text}").classes("text-sm")
-                                        
+                                        dict_label = ui.label(f"[{dict_name}]")
+                                        dict_label.classes("text-xs text-gray-500")
+
+                                        # Definitions (first 3)
+                                        for def_text in definitions[:3]:
+                                            def_label = ui.label(f"• {def_text}")
+                                            def_label.classes("text-sm")
+
                                         if len(definitions) > 3:
-                                            ui.label(f"... and {len(definitions) - 3} more").classes("text-xs text-gray-400")
-                                    
+                                            more_count = len(definitions) - 3
+                                            more_label = ui.label(
+                                                f"... and {more_count} more"
+                                            )
+                                            more_label.classes("text-xs text-gray-400")
+
                                     # Connect checkbox to visibility
                                     checkbox = checkboxes.get(dict_id)
                                     if checkbox:
                                         # Bind visibility to checkbox state
-                                        def_container.bind_visibility_from(checkbox, 'value')
+                                        def_container.bind_visibility_from(
+                                            checkbox, "value"
+                                        )
 
 
 @ui.page("/")
@@ -586,20 +595,22 @@ def results_page(session_id: str):
             files = list(results_dir.glob("*"))
 
             # Download section
-            ui.markdown(f"## Download Results")
-            
+            ui.markdown("## Download Results")
+
             with ui.card().classes("w-full p-4"):
                 for file_path in files:
                     with ui.row().classes("items-center gap-2"):
                         ui.label(file_path.name)
-                        ui.button(
-                            "Download", on_click=lambda fp=file_path: ui.download(str(fp))
-                        )
+
+                        def make_download(fp):
+                            return lambda: ui.download(str(fp))
+
+                        ui.button("Download", on_click=make_download(file_path))
 
             # Interactive results display
             ui.separator()
             ui.markdown("## Interactive Results")
-            
+
             # Load and display JSON analysis results
             json_files = list(results_dir.glob("*.json"))
             if json_files:
