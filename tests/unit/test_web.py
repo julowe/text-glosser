@@ -304,7 +304,7 @@ class TestInteractiveResultsDisplay:
         ]
 
         # Group words by text (as done in display_interactive_results)
-        words_by_text: dict[str, list] = {}
+        words_by_text: dict[str, list[dict]] = {}
         for word_data in words_data:
             word_text = word_data.get("word", "")
             if word_text not in words_by_text:

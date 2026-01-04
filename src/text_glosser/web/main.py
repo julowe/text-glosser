@@ -4,8 +4,10 @@ Web UI for text-glosser using FastAPI and NiceGUI.
 This module provides the web interface for the text-glosser application.
 """
 
+import json
 import shutil
 import uuid
+from functools import partial
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -454,8 +456,6 @@ def display_interactive_results(json_file: Path, session):
     session : SessionConfig
         Session configuration
     """
-    import json
-
     # Load analysis data
     try:
         with open(json_file, encoding="utf-8") as f:
@@ -510,7 +510,7 @@ def display_interactive_results(json_file: Path, session):
 
                     # Create word-by-word display
                     # Group words by their original word text
-                    words_by_text: dict[str, list] = {}
+                    words_by_text: dict[str, list[dict]] = {}
                     for word_data in words_data:
                         word_text = word_data.get("word", "")
                         if word_text not in words_by_text:
@@ -601,11 +601,10 @@ def results_page(session_id: str):
                 for file_path in files:
                     with ui.row().classes("items-center gap-2"):
                         ui.label(file_path.name)
-
-                        def make_download(fp):
-                            return lambda: ui.download(str(fp))
-
-                        ui.button("Download", on_click=make_download(file_path))
+                        ui.button(
+                            "Download",
+                            on_click=partial(ui.download, str(file_path)),
+                        )
 
             # Interactive results display
             ui.separator()
