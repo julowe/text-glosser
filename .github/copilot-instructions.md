@@ -164,7 +164,7 @@ The `tests/` directory contains real linguistic text samples for testing:
 
 - **Input files**: `.txt` extension (e.g., `deer-park.txt`, `Mūlamadhyamakārikāḥ-ch1.txt`)
 - **Expected outputs**: `.conllu`, `.md`, `.json`, `.tex` extensions matching the input basename
-- **Best practice**: Use these files instead of creating dummy data when writing tests
+- **Best practice**: Use these files in addition to creating dummy data when writing tests
 - **Comparison testing**: When output files exist, compare processor output against them
 - **Missing outputs**: Not all inputs have outputs yet - document which formats are tested
 - **Documentation**: See `tests/README.md` for information about test file sources and structure
