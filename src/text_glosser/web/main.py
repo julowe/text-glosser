@@ -445,7 +445,7 @@ def process_text(state):
         traceback.print_exc()
 
 
-def display_interactive_results(json_file: Path, session):
+def display_interactive_results(json_file: Path):
     """
     Display interactive analysis results with dictionary filtering.
 
@@ -453,8 +453,6 @@ def display_interactive_results(json_file: Path, session):
     ----------
     json_file : Path
         Path to the JSON analysis file
-    session : SessionConfig
-        Session configuration
     """
     # Load analysis data
     try:
@@ -614,7 +612,7 @@ def results_page(session_id: str):
             json_files = list(results_dir.glob("*.json"))
             if json_files:
                 for json_file in json_files:
-                    display_interactive_results(json_file, session)
+                    display_interactive_results(json_file)
             else:
                 ui.label("No analysis results available for interactive display")
 

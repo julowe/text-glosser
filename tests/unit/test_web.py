@@ -4,7 +4,6 @@ Tests for web UI functionality.
 
 import json
 import tempfile
-from pathlib import Path
 
 from text_glosser.web.main import LANGUAGE_NAMES, get_language_display_name
 
@@ -268,23 +267,18 @@ class TestInteractiveResultsDisplay:
             ],
         }
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        # Use context manager for safer cleanup
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=True) as f:
             json.dump(analysis_data, f)
-            temp_path = f.name
+            f.flush()  # Ensure data is written
 
-        try:
             # Load and verify the JSON file
-            with open(temp_path, encoding="utf-8") as f:
-                loaded_data = json.load(f)
+            with open(f.name, encoding="utf-8") as read_f:
+                loaded_data = json.load(read_f)
 
             assert loaded_data == analysis_data
             assert loaded_data["metadata"]["source_name"] == "test.txt"
             assert len(loaded_data["lines"]) == 1
-        finally:
-            # Clean up
-            Path(temp_path).unlink()
 
     def test_word_grouping_logic(self):
         """
