@@ -16,6 +16,7 @@ Text Glosser is a web-based and CLI application that creates word-by-word glosse
 ### Directory Structure
 
 **Source structure:**
+
 ```
 src/text_glosser/
 ├── __init__.py
@@ -42,6 +43,7 @@ src/text_glosser/
 ```
 
 **Test structure:**
+
 ```
 tests/
 ├── __init__.py
@@ -89,19 +91,19 @@ tests/
 def process_text(source: str, resources: List[str]) -> Analysis:
     """
     Process text using selected resources.
-    
+
     Parameters
     ----------
     source : str
         Text to analyze
     resources : List[str]
         Resource IDs to use
-    
+
     Returns
     -------
     Analysis
         Analysis results
-    
+
     Raises
     ------
     ValueError
@@ -170,11 +172,12 @@ The `tests/` directory contains real linguistic text samples for testing:
 - **Documentation**: See `tests/README.md` for information about test file sources and structure
 
 Example test pattern:
+
 ```python
 def test_process_deer_park():
     """Test processing with real Chinese poem."""
     from pathlib import Path
-    
+
     input_file = Path(__file__).parent.parent / "deer-park.txt"
     content = input_file.read_text(encoding="utf-8")
     # Process and compare against expected output if available
@@ -251,12 +254,12 @@ The application supports Arabic dictionaries (Lane's and Salmone's lexicons). Wh
 def process_line(text: str) -> str:
     """
     Process a line of text, preserving RTL text direction.
-    
+
     Parameters
     ----------
     text : str
         Input text (may contain RTL characters)
-    
+
     Returns
     -------
     str
@@ -360,6 +363,7 @@ docker run -p 8080:8080 text-glosser:dev
 ### Pre-commit Checks
 
 Before pushing:
+
 - Run tests: `PYTHONPATH=src pytest`
 - Run linter: `ruff check src/ tests/`
 - Run formatter: `ruff format src/ tests/`
@@ -394,6 +398,7 @@ Before pushing:
 ## Questions?
 
 For issues, questions, or suggestions:
+
 - Open an issue on GitHub
 - Check existing documentation
 - Review test files for usage examples
