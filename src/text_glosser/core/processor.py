@@ -100,6 +100,22 @@ class TextProcessor:
         self.parsers[resource.id] = parser
         return parser
 
+    def _is_chinese_char(self, char: str) -> bool:
+        """
+        Check if a character is a Chinese character.
+
+        Parameters
+        ----------
+        char : str
+            Character to check
+
+        Returns
+        -------
+        bool
+            True if character is in the CJK Unified Ideographs range
+        """
+        return "\u4e00" <= char <= "\u9fff"
+
     def _tokenize(self, text: str) -> list[str]:
         """
         Tokenize text into words.
@@ -116,13 +132,34 @@ class TextProcessor:
 
         Notes
         -----
-        This is a simple tokenization that splits on whitespace and punctuation.
-        More sophisticated tokenization could be added for specific languages.
+        This tokenization handles Chinese characters individually while keeping
+        other languages' words together. Chinese characters (CJK Unified Ideographs)
+        are treated as separate tokens, while other scripts are split on whitespace
+        and punctuation.
         """
-        # Split on whitespace and common punctuation
-        # Keep words, remove empty strings
-        words = re.findall(r"\b\w+\b", text)
-        return words
+        tokens = []
+        i = 0
+        while i < len(text):
+            char = text[i]
+            
+            # If it's a Chinese character, add it as a separate token
+            if self._is_chinese_char(char):
+                tokens.append(char)
+                i += 1
+            # If it's whitespace or punctuation, skip it
+            elif not char.isalnum():
+                i += 1
+            # Otherwise, it's part of a non-Chinese word
+            else:
+                # Collect consecutive non-Chinese alphanumeric characters
+                word = ""
+                while i < len(text) and text[i].isalnum() and not self._is_chinese_char(text[i]):
+                    word += text[i]
+                    i += 1
+                if word:
+                    tokens.append(word)
+        
+        return tokens
 
     def _lookup_word(self, word: str, resource: DictionaryResource) -> list[str] | None:
         """
