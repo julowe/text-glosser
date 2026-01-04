@@ -2,7 +2,12 @@
 
 import pytest
 
-from text_glosser.core.models import DictionaryFormat, DictionaryResource, ResourceType, TextSource
+from text_glosser.core.models import (
+    DictionaryFormat,
+    DictionaryResource,
+    ResourceType,
+    TextSource,
+)
 from text_glosser.core.processor import TextProcessor
 from text_glosser.core.registry import ResourceRegistry
 
@@ -101,11 +106,12 @@ class TestTextProcessor:
         )
 
         analysis = processor.analyze_text(source, ["test-chinese"])
-        
+
         # Should process 2 characters
         assert analysis.total_words == 2
         # Each character should be analyzed separately
         if len(analysis.lines) > 0:
             # Check that we have individual character lookups
-            assert any(wd.word == "五" for line in analysis.lines for wd in line.words) or \
-                   any("五" in err for err in analysis.errors)
+            assert any(
+                wd.word == "五" for line in analysis.lines for wd in line.words
+            ) or any("五" in err for err in analysis.errors)

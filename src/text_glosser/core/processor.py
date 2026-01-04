@@ -5,8 +5,8 @@ This module processes text sources using selected dictionaries and resources
 to generate word-by-word analysis with definitions.
 """
 
-import re
 from datetime import datetime
+from typing import Any
 
 from ..core.models import (
     DictionaryFormat,
@@ -45,7 +45,7 @@ class TextProcessor:
             Resource registry instance
         """
         self.registry = registry
-        self.parsers: dict[str, any] = {}
+        self.parsers: dict[str, Any] = {}
 
     def _get_parser(self, resource: DictionaryResource):
         """
@@ -141,7 +141,7 @@ class TextProcessor:
         i = 0
         while i < len(text):
             char = text[i]
-            
+
             # If it's a Chinese character, add it as a separate token
             if self._is_chinese_char(char):
                 tokens.append(char)
@@ -153,12 +153,16 @@ class TextProcessor:
             else:
                 # Collect consecutive non-Chinese alphanumeric characters
                 word = ""
-                while i < len(text) and text[i].isalnum() and not self._is_chinese_char(text[i]):
+                while (
+                    i < len(text)
+                    and text[i].isalnum()
+                    and not self._is_chinese_char(text[i])
+                ):
                     word += text[i]
                     i += 1
                 if word:
                     tokens.append(word)
-        
+
         return tokens
 
     def _lookup_word(self, word: str, resource: DictionaryResource) -> list[str] | None:
