@@ -15,22 +15,52 @@ Text Glosser is a web-based and CLI application that creates word-by-word glosse
 
 ### Directory Structure
 
+**Source structure:**
+
 ```
 src/text_glosser/
-├── core/           # Core functionality
+├── __init__.py
+├── core/
+│   ├── __init__.py
 │   ├── models.py       # Pydantic data models
 │   ├── registry.py     # Dictionary resource registry
 │   ├── ingestion.py    # Text input from files/URLs
 │   ├── processor.py    # Text processing engine
 │   ├── exporters.py    # Output formatters (MD, JSON, CoNLL-U)
 │   ├── session.py      # Web UI session management
-│   └── parsers/        # Dictionary parsers (StarDict, etc.)
-├── utils/          # Utility modules
+│   └── parsers/
+│       ├── __init__.py
+│       └── stardict.py # StarDict format parser
+├── utils/
+│   ├── __init__.py
 │   └── security.py     # Input sanitization and validation
-├── cli/            # Command-line interface
+├── cli/
+│   ├── __init__.py
 │   └── main.py         # Click-based CLI
-└── web/            # Web interface
+└── web/
+    ├── __init__.py
     └── main.py         # FastAPI + NiceGUI web app
+```
+
+**Test structure:**
+
+```
+tests/
+├── __init__.py
+├── README.md
+├── unit/
+│   ├── __init__.py
+│   ├── test_models.py
+│   ├── test_security.py
+│   ├── test_processor.py
+│   ├── test_web.py
+│   └── test_web_upload.py
+├── integration/
+│   └── __init__.py
+├── deer-park.txt                                    # Chinese poem test input
+├── Mūlamadhyamakārikāḥ-ch1.txt                     # Sanskrit text input
+├── Mūlamadhyamakārikāḥ-ch1-transliteration.txt     # Transliterated Sanskrit
+└── Mūlamadhyamakārikāḥ-ch1.conllu                  # Expected CoNLL-U output
 ```
 
 ### Key Components
@@ -61,19 +91,19 @@ src/text_glosser/
 def process_text(source: str, resources: List[str]) -> Analysis:
     """
     Process text using selected resources.
-    
+
     Parameters
     ----------
     source : str
         Text to analyze
     resources : List[str]
         Resource IDs to use
-    
+
     Returns
     -------
     Analysis
         Analysis results
-    
+
     Raises
     ------
     ValueError
@@ -128,6 +158,29 @@ PYTHONPATH=src pytest tests/unit/test_security.py
 
 # Skip slow tests
 PYTHONPATH=src pytest -m "not slow"
+```
+
+### Using Test Data Files
+
+The `tests/` directory contains real linguistic text samples for testing:
+
+- **Input files**: `.txt` extension (e.g., `deer-park.txt`, `Mūlamadhyamakārikāḥ-ch1.txt`)
+- **Expected outputs**: `.conllu`, `.md`, `.json`, `.tex` extensions matching the input basename
+- **Best practice**: Use these files in addition to creating dummy data when writing tests
+- **Comparison testing**: When output files exist, compare processor output against them
+- **Missing outputs**: Not all inputs have outputs yet - document which formats are tested
+- **Documentation**: See `tests/README.md` for information about test file sources and structure
+
+Example test pattern:
+
+```python
+def test_process_deer_park():
+    """Test processing with real Chinese poem."""
+    from pathlib import Path
+
+    input_file = Path(__file__).parent.parent / "deer-park.txt"
+    content = input_file.read_text(encoding="utf-8")
+    # Process and compare against expected output if available
 ```
 
 ## Security Considerations
@@ -201,12 +254,12 @@ The application supports Arabic dictionaries (Lane's and Salmone's lexicons). Wh
 def process_line(text: str) -> str:
     """
     Process a line of text, preserving RTL text direction.
-    
+
     Parameters
     ----------
     text : str
         Input text (may contain RTL characters)
-    
+
     Returns
     -------
     str
@@ -310,6 +363,7 @@ docker run -p 8080:8080 text-glosser:dev
 ### Pre-commit Checks
 
 Before pushing:
+
 - Run tests: `PYTHONPATH=src pytest`
 - Run linter: `ruff check src/ tests/`
 - Run formatter: `ruff format src/ tests/`
@@ -344,6 +398,7 @@ Before pushing:
 ## Questions?
 
 For issues, questions, or suggestions:
+
 - Open an issue on GitHub
 - Check existing documentation
 - Review test files for usage examples
