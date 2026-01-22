@@ -5,6 +5,8 @@ This module provides Arabic text normalization and lemmatization
 using pyarabic and qalsadi libraries to improve dictionary lookup accuracy.
 """
 
+from typing import Any
+
 from . import LanguageProcessor
 
 
@@ -40,11 +42,11 @@ class ArabicProcessor(LanguageProcessor):
     """
 
     language_code: str = "ar"
-    _lemmatizer = None
 
     def __init__(self):
         """Initialize the Arabic processor."""
-        self._lemmatizer = None
+        # Lazily loaded lemmatizer instance (qalsadi.lemmatizer.Lemmatizer)
+        self._lemmatizer: Any = None
 
     def _get_lemmatizer(self):
         """
@@ -184,11 +186,11 @@ class ArabicProcessor(LanguageProcessor):
 
 def get_arabic_processor() -> ArabicProcessor:
     """
-    Get a singleton instance of the Arabic processor.
+    Create a new instance of the Arabic processor.
 
     Returns
     -------
     ArabicProcessor
-        The Arabic processor instance
+        A new Arabic processor instance
     """
     return ArabicProcessor()
