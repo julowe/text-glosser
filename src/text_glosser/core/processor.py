@@ -8,6 +8,8 @@ to generate word-by-word analysis with definitions.
 from datetime import datetime
 from typing import Any
 
+from ..core.language_processors import LanguageProcessor
+from ..core.language_processors.arabic import ArabicProcessor
 from ..core.models import (
     DictionaryFormat,
     DictionaryResource,
@@ -46,6 +48,33 @@ class TextProcessor:
         """
         self.registry = registry
         self.parsers: dict[str, Any] = {}
+        self._language_processors: dict[str, LanguageProcessor] = {}
+
+    def _get_language_processor(self, language_code: str) -> LanguageProcessor | None:
+        """
+        Get or create a language processor for a specific language.
+
+        Parameters
+        ----------
+        language_code : str
+            ISO 639-1 language code
+
+        Returns
+        -------
+        LanguageProcessor | None
+            Language processor instance or None if not available
+        """
+        if language_code in self._language_processors:
+            return self._language_processors[language_code]
+
+        processor = None
+        if language_code == "ar":
+            processor = ArabicProcessor()
+
+        if processor:
+            self._language_processors[language_code] = processor
+
+        return processor
 
     def _get_parser(self, resource: DictionaryResource):
         """
@@ -169,6 +198,9 @@ class TextProcessor:
         """
         Look up a word in a specific resource.
 
+        For Arabic resources, uses the Arabic language processor to try
+        multiple forms (original, normalized, lemmatized) for lookup.
+
         Parameters
         ----------
         word : str
@@ -189,9 +221,27 @@ class TextProcessor:
 
         if resource.format == DictionaryFormat.STARDICT:
             if hasattr(parser, "lookup"):
-                result = parser.lookup(word)
-                if result:
-                    definitions.append(result)
+                # For Arabic resources, try multiple forms of the word
+                if resource.primary_language == "ar":
+                    lang_processor = self._get_language_processor("ar")
+                    if lang_processor:
+                        # Get all forms to try (original, normalized, lemmas)
+                        lookup_forms = lang_processor.get_lookup_forms(word)
+                        for form in lookup_forms:
+                            result = parser.lookup(form)
+                            if result:
+                                definitions.append(result)
+                                break  # Stop after first successful lookup
+                    else:
+                        # Fallback: direct lookup
+                        result = parser.lookup(word)
+                        if result:
+                            definitions.append(result)
+                else:
+                    # Non-Arabic: direct lookup
+                    result = parser.lookup(word)
+                    if result:
+                        definitions.append(result)
 
         elif resource.format == DictionaryFormat.HANZIPY:
             # Use hanzipy for Chinese characters

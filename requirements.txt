@@ -8,6 +8,8 @@ pydantic-settings>=2.0.0
 # Dictionary and text processing
 pystardict>=0.8.1
 hanzipy>=0.1.1
+pyarabic>=0.6.15
+qalsadi>=0.5.1
 beautifulsoup4>=4.12.0
 requests>=2.31.0
 lxml>=4.9.0
