@@ -3,9 +3,14 @@ Language processors for text-glosser.
 
 This module provides language-specific text processing capabilities
 including normalization, tokenization, and lemmatization.
+
+The module follows the Strategy Pattern for morphological analysis,
+allowing different analysis backends to be used interchangeably.
 """
 
 from abc import ABC, abstractmethod
+
+from .base import MorphologicalAnalyzer, TokenSegment
 
 
 class LanguageProcessor(ABC):
@@ -104,3 +109,10 @@ class LanguageProcessor(ABC):
                 forms.append(lemma)
 
         return forms
+
+
+__all__ = [
+    "LanguageProcessor",
+    "MorphologicalAnalyzer",
+    "TokenSegment",
+]
