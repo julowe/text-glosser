@@ -35,6 +35,8 @@ dependencies = [
     "pyyaml>=6.0.1",
     "pystardict>=0.8.1",
     "hanzipy>=0.1.1",
+    "pyarabic>=0.6.15",
+    "qalsadi>=0.5.1",
     "conllu>=4.5.0",
 ]
 

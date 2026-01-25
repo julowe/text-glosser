@@ -2,19 +2,138 @@
 StarDict dictionary file parser.
 
 This module provides functionality to read and query StarDict format dictionaries.
+It uses the pystardict library as the primary implementation with a fallback
+to a custom parser if pystardict is unavailable or fails.
 """
 
 import gzip
+import logging
 import struct
 from pathlib import Path
+from typing import Protocol
+
+logger = logging.getLogger(__name__)
 
 
-class StarDictParser:
+class StarDictParserProtocol(Protocol):
+    """Protocol defining the interface for StarDict parsers."""
+
+    def lookup(self, word: str) -> str | None:
+        """Look up a word in the dictionary."""
+        ...
+
+    def search(self, prefix: str, limit: int = 10) -> list[str]:
+        """Search for words starting with a prefix."""
+        ...
+
+    def get_all_words(self) -> list[str]:
+        """Get all words in the dictionary."""
+        ...
+
+
+class PyStarDictParser:
     """
-    Parser for StarDict format dictionaries.
+    Parser using the pystardict library.
 
-    This class reads StarDict .ifo, .idx, and .dict files to provide
-    word lookup functionality.
+    This is the preferred implementation as pystardict is a well-maintained
+    library with support for synonyms and proper StarDict format handling.
+
+    Attributes
+    ----------
+    dictionary : pystardict.Dictionary
+        The pystardict Dictionary instance
+    """
+
+    def __init__(self, ifo_path: str):
+        """
+        Initialize the pystardict-based parser.
+
+        Parameters
+        ----------
+        ifo_path : str
+            Path to the .ifo file
+
+        Raises
+        ------
+        ImportError
+            If pystardict is not installed
+        Exception
+            If the dictionary cannot be loaded
+        """
+        import pystardict
+
+        ifo_file = Path(ifo_path)
+        # pystardict expects the path prefix without extension
+        prefix = str(ifo_file.parent / ifo_file.stem)
+        # Use in_memory=True for reliable string-based lookups
+        self.dictionary = pystardict.Dictionary(prefix, in_memory=True)
+        self._word_list: list[str] | None = None
+
+    def lookup(self, word: str) -> str | None:
+        """
+        Look up a word in the dictionary.
+
+        Parameters
+        ----------
+        word : str
+            The word to look up
+
+        Returns
+        -------
+        Optional[str]
+            The definition if found, None otherwise
+        """
+        try:
+            result = self.dictionary.get(word, None)
+            return result if result else None
+        except Exception as e:
+            logger.debug(f"pystardict lookup error for '{word}': {e}")
+            return None
+
+    def search(self, prefix: str, limit: int = 10) -> list[str]:
+        """
+        Search for words starting with a prefix.
+
+        Parameters
+        ----------
+        prefix : str
+            The prefix to search for
+        limit : int, optional
+            Maximum number of results (default: 10)
+
+        Returns
+        -------
+        List[str]
+            List of matching words
+        """
+        all_words = self.get_all_words()
+        matches = [word for word in all_words if word.startswith(prefix)]
+        return matches[:limit]
+
+    def get_all_words(self) -> list[str]:
+        """
+        Get all words in the dictionary.
+
+        Returns
+        -------
+        List[str]
+            List of all words
+        """
+        if self._word_list is None:
+            # Access the internal index and decode bytes keys to strings
+            self._word_list = [
+                k.decode("utf-8") if isinstance(k, bytes) else k
+                for k in self.dictionary.idx._idx.keys()
+            ]
+        return self._word_list
+
+
+class FallbackStarDictParser:
+    """
+    Fallback parser for StarDict format dictionaries.
+
+    This is a pure-Python implementation used when pystardict is unavailable
+    or fails to load a dictionary.
 
     Attributes
     ----------
@@ -30,7 +149,7 @@ class StarDictParser:
 
     def __init__(self, ifo_path: str):
         """
-        Initialize the StarDict parser.
+        Initialize the fallback StarDict parser.
 
         Parameters
         ----------
@@ -121,8 +240,7 @@ class StarDictParser:
             definition = data.decode("utf-8", errors="ignore")
             return definition
         except Exception as e:
-            # Log error but don't crash
-            print(f"Error reading definition for '{word}': {e}")
+            logger.warning(f"Error reading definition for '{word}': {e}")
             return None
 
     def search(self, prefix: str, limit: int = 10) -> list[str]:
@@ -154,3 +272,38 @@ class StarDictParser:
             List of all words
         """
         return list(self.index.keys())
+
+
+def StarDictParser(ifo_path: str) -> StarDictParserProtocol:
+    """
+    Factory function to create a StarDict parser.
+
+    Attempts to use pystardict first, falling back to the custom
+    implementation if pystardict is unavailable or fails.
+
+    Parameters
+    ----------
+    ifo_path : str
+        Path to the .ifo file
+
+    Returns
+    -------
+    StarDictParserProtocol
+        A parser instance (either PyStarDictParser or FallbackStarDictParser)
+
+    Raises
+    ------
+    FileNotFoundError
+        If the dictionary files cannot be found
+    """
+    try:
+        parser = PyStarDictParser(ifo_path)
+        logger.debug(f"Using pystardict for {ifo_path}")
+        return parser
+    except ImportError:
+        logger.info("pystardict not available, using fallback parser")
+    except Exception as e:
+        logger.warning(f"pystardict failed for {ifo_path}: {e}, using fallback parser")
+
+    return FallbackStarDictParser(ifo_path)
+
