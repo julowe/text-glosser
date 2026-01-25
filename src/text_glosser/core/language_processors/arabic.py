@@ -8,6 +8,8 @@ using pyarabic and qalsadi libraries to improve dictionary lookup accuracy.
 from typing import Any
 
 from . import LanguageProcessor
+from .base import MorphologicalAnalyzer, TokenSegment
+from .qalsadi_analyzer import QalsadiAnalyzer
 
 
 class ArabicProcessor(LanguageProcessor):
@@ -18,12 +20,19 @@ class ArabicProcessor(LanguageProcessor):
     alef variants, removing tatweel) and qalsadi for lemmatization to
     extract root forms for dictionary lookup.
 
+    This processor supports morphological analysis via a configurable
+    analyzer (Strategy Pattern). The default analyzer is QalsadiAnalyzer,
+    but this can be swapped for other implementations (CAMeL Tools, Stanza)
+    without changing the main application logic.
+
     Attributes
     ----------
     language_code : str
         ISO 639-1 code for Arabic ('ar')
     _lemmatizer : qalsadi.lemmatizer.Lemmatizer | None
         Cached lemmatizer instance (lazily loaded)
+    _analyzer : MorphologicalAnalyzer
+        Morphological analyzer for word segmentation
 
     Notes
     -----
@@ -39,14 +48,27 @@ class ArabicProcessor(LanguageProcessor):
     'يكتبون'
     >>> processor.lemmatize("يكتبون")
     ['كتب']
+    >>> segments = processor.analyze_word("وبكتاب")
+    >>> [s.segment_text for s in segments]
+    ['و', 'ب', 'كتاب']
     """
 
     language_code: str = "ar"
 
-    def __init__(self):
-        """Initialize the Arabic processor."""
+    def __init__(self, analyzer: MorphologicalAnalyzer | None = None):
+        """
+        Initialize the Arabic processor.
+
+        Parameters
+        ----------
+        analyzer : MorphologicalAnalyzer | None, optional
+            Morphological analyzer to use for word segmentation.
+            Defaults to QalsadiAnalyzer if not provided.
+        """
         # Lazily loaded lemmatizer instance (qalsadi.lemmatizer.Lemmatizer)
         self._lemmatizer: Any = None
+        # Morphological analyzer (defaults to Qalsadi)
+        self._analyzer: MorphologicalAnalyzer = analyzer or QalsadiAnalyzer()
 
     def _get_lemmatizer(self):
         """
@@ -187,14 +209,84 @@ class ArabicProcessor(LanguageProcessor):
                     return True
             return False
 
+    def analyze_word(self, word: str) -> list[TokenSegment]:
+        """
+        Analyze an Arabic word into its morphological segments.
 
-def get_arabic_processor() -> ArabicProcessor:
+        This method uses the configured morphological analyzer to break down
+        a word into its constituent parts (prefixes, stem, suffixes).
+        For example, "وبكتاب" becomes ["و" (and), "ب" (with), "كتاب" (book)].
+
+        Parameters
+        ----------
+        word : str
+            Arabic word to analyze
+
+        Returns
+        -------
+        list[TokenSegment]
+            List of token segments representing the word's morphological parts.
+            Each segment contains segment_text, lemma, root, pos, and gloss.
+
+        Examples
+        --------
+        >>> processor = ArabicProcessor()
+        >>> segments = processor.analyze_word("وبكتاب")
+        >>> [s.segment_text for s in segments]
+        ['و', 'ب', 'كتاب']
+        >>> segments[0].pos
+        'CONJ'
+        """
+        return self._analyzer.analyze_word(word)
+
+    def set_analyzer(self, analyzer: MorphologicalAnalyzer) -> None:
+        """
+        Set the morphological analyzer to use.
+
+        This allows swapping the analysis backend at runtime for
+        different analysis strategies (Qalsadi, CAMeL Tools, Stanza).
+
+        Parameters
+        ----------
+        analyzer : MorphologicalAnalyzer
+            The analyzer to use for morphological analysis
+
+        Examples
+        --------
+        >>> from text_glosser.core.language_processors.qalsadi_analyzer import (
+        ...     QalsadiAnalyzer,
+        ... )
+        >>> processor = ArabicProcessor()
+        >>> processor.set_analyzer(QalsadiAnalyzer())
+        """
+        self._analyzer = analyzer
+
+    def get_analyzer(self) -> MorphologicalAnalyzer:
+        """
+        Get the current morphological analyzer.
+
+        Returns
+        -------
+        MorphologicalAnalyzer
+            The currently configured analyzer
+        """
+        return self._analyzer
+
+
+def get_arabic_processor(
+    analyzer: MorphologicalAnalyzer | None = None,
+) -> ArabicProcessor:
     """
     Create a new instance of the Arabic processor.
+
+    Parameters
+    ----------
+    analyzer : MorphologicalAnalyzer | None, optional
+        Morphological analyzer to use. Defaults to QalsadiAnalyzer.
 
     Returns
     -------
     ArabicProcessor
         A new Arabic processor instance
     """
-    return ArabicProcessor()
+    return ArabicProcessor(analyzer=analyzer)
