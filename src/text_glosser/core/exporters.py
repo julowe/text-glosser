@@ -48,7 +48,9 @@ def _convert_html_to_markdown(text: str) -> str:
     text = re.sub(r"</p>", "\n", text, flags=re.IGNORECASE)
 
     # Strip font color tags (keep content)
-    text = re.sub(r"<font[^>]*>(.*?)</font>", r"\1", text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(
+        r"<font[^>]*>(.*?)</font>", r"\1", text, flags=re.IGNORECASE | re.DOTALL
+    )
 
     # Strip remaining HTML tags
     text = re.sub(r"<[^>]+>", "", text)
@@ -87,7 +89,9 @@ def _strip_html_for_conllu(text: str) -> str:
     text = re.sub(r"(<br\s*/?>|<p\s*/?>|</p>)+", ";;", text, flags=re.IGNORECASE)
 
     # Strip font color tags (keep content)
-    text = re.sub(r"<font[^>]*>(.*?)</font>", r"\1", text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(
+        r"<font[^>]*>(.*?)</font>", r"\1", text, flags=re.IGNORECASE | re.DOTALL
+    )
 
     # Strip all remaining HTML tags
     text = re.sub(r"<[^>]+>", "", text)
@@ -365,7 +369,9 @@ def format_conllu(analysis: TextAnalysis) -> str:
             # Format lemma column - comma-separated if multiple, underscore if none
             if lemmas:
                 # Strip HTML from lemmas and join with comma
-                cleaned_lemmas = [_strip_html_for_conllu(str(l)) for l in lemmas]
+                cleaned_lemmas = [
+                    _strip_html_for_conllu(str(lem)) for lem in lemmas
+                ]
                 lemma = ",".join(cleaned_lemmas)
             else:
                 lemma = "_"

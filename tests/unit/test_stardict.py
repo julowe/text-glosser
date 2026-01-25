@@ -256,7 +256,7 @@ class TestPyStarDictParser:
         ifo_file = tmp_path / "test.ifo"
         ifo_file.write_text("test")
 
-        parser = PyStarDictParser(str(ifo_file))
+        _ = PyStarDictParser(str(ifo_file))
 
         # Verify Dictionary was called with correct prefix
         expected_prefix = str(tmp_path / "test")

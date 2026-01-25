@@ -3,7 +3,10 @@
 import pytest
 
 from text_glosser.core.language_processors.arabic import ArabicProcessor
-from text_glosser.core.language_processors.base import MorphologicalAnalyzer, TokenSegment
+from text_glosser.core.language_processors.base import (
+    MorphologicalAnalyzer,
+    TokenSegment,
+)
 from text_glosser.core.language_processors.qalsadi_analyzer import QalsadiAnalyzer
 
 
@@ -52,7 +55,10 @@ class TestArabicProcessor:
         # The vocalized root should be كَتَبَ (with diacritics)
         # or أَكْتَبَ depending on the word form
         # Check that we got a result containing the root letters ك ت ب
-        assert any("كتب" in lemma or "كَتَبَ" in lemma or "أَكْتَبَ" in lemma for lemma in lemmas)
+        assert any(
+            "كتب" in lemma or "كَتَبَ" in lemma or "أَكْتَبَ" in lemma
+            for lemma in lemmas
+        )
 
     def test_lemmatize_noun_form(self, processor):
         """Test lemmatization of noun form."""

@@ -263,7 +263,7 @@ class TextProcessor:
                         lookup_forms = lang_processor.get_lookup_forms(word)
 
                         # Store lemmas in grammatical_info
-                        # The lookup_forms typically include: original, normalized, lemmas
+                        # lookup_forms typically include: original, normalized, lemmas
                         # We want to capture the lemmas specifically
                         if hasattr(lang_processor, "lemmatize"):
                             lemma = lang_processor.lemmatize(word)
