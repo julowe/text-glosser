@@ -222,7 +222,9 @@ class TextProcessor:
 
         return tokens
 
-    def _lookup_word(self, word: str, resource: DictionaryResource) -> list[str] | None:
+    def _lookup_word(
+        self, word: str, resource: DictionaryResource
+    ) -> dict[str, Any] | None:
         """
         Look up a word in a specific resource.
 
@@ -238,14 +240,18 @@ class TextProcessor:
 
         Returns
         -------
-        Optional[List[str]]
-            List of definitions, or None if not found
+        Optional[Dict[str, Any]]
+            Dictionary containing:
+            - 'definitions': List of definition strings
+            - 'grammatical_info': Dict with lemmas and other grammatical data
+            Or None if not found
         """
         parser = self._get_parser(resource)
         if not parser:
             return None
 
         definitions = []
+        grammatical_info: dict[str, Any] = {}
 
         if resource.format == DictionaryFormat.STARDICT:
             if hasattr(parser, "lookup"):
@@ -255,11 +261,32 @@ class TextProcessor:
                     if lang_processor:
                         # Get all forms to try (original, normalized, lemmas)
                         lookup_forms = lang_processor.get_lookup_forms(word)
+
+                        # Store lemmas in grammatical_info
+                        # The lookup_forms typically include: original, normalized, lemmas
+                        # We want to capture the lemmas specifically
+                        if hasattr(lang_processor, "lemmatize"):
+                            lemma = lang_processor.lemmatize(word)
+                            if lemma and lemma != word:
+                                grammatical_info["lemmas"] = [lemma]
+
+                        # Also store the normalized form if different
+                        if hasattr(lang_processor, "normalize"):
+                            normalized = lang_processor.normalize(word)
+                            if normalized and normalized != word:
+                                grammatical_info["normalized_form"] = normalized
+
+                        matched_form = None
                         for form in lookup_forms:
                             result = parser.lookup(form)
                             if result:
                                 definitions.append(result)
+                                matched_form = form
                                 break  # Stop after first successful lookup
+
+                        # Record which form matched
+                        if matched_form and matched_form != word:
+                            grammatical_info["matched_form"] = matched_form
                     else:
                         # Fallback: direct lookup
                         result = parser.lookup(word)
@@ -279,17 +306,19 @@ class TextProcessor:
                     # Get character information
                     for char in word:
                         if self._is_chinese_char(char):
-                            # char_decomp = hDecomposer.decompose(char)
-                            # char_definition = hDictionary.definition_lookup(char)
                             info = parser.definition_lookup(char)
-                            # info = parser.decompose(char)
                             if info:
                                 definition = f"Character: {char}, Decomposition: {info}"
                                 definitions.append(definition)
             except Exception as e:
                 print(f"Error using hanzipy: {e}")
 
-        return definitions if definitions else None
+        if definitions:
+            return {
+                "definitions": definitions,
+                "grammatical_info": grammatical_info if grammatical_info else None,
+            }
+        return None
 
     def analyze_text(
         self, source: TextSource, selected_resource_ids: list[str]
@@ -338,13 +367,14 @@ class TextProcessor:
                 found_definitions = False
 
                 for resource in resources:
-                    definitions = self._lookup_word(word, resource)
-                    if definitions:
+                    lookup_result = self._lookup_word(word, resource)
+                    if lookup_result:
                         word_defs.append(
                             WordDefinition(
                                 word=word,
-                                definitions=definitions,
+                                definitions=lookup_result["definitions"],
                                 source_dict=resource.id,
+                                grammatical_info=lookup_result.get("grammatical_info"),
                             )
                         )
                         found_definitions = True

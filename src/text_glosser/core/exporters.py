@@ -7,9 +7,104 @@ This module provides functions to export analysis results in various formats:
 - CoNLL-U
 """
 
+import html
 import json
+import re
 
 from ..core.models import SessionConfig, TextAnalysis
+
+
+def _convert_html_to_markdown(text: str) -> str:
+    """
+    Convert HTML tags to Markdown syntax and clean up the text.
+
+    Parameters
+    ----------
+    text : str
+        Text potentially containing HTML tags
+
+    Returns
+    -------
+    str
+        Text with HTML converted to Markdown or stripped
+    """
+    if not text:
+        return text
+
+    # Convert bold tags to markdown
+    text = re.sub(r"<b>(.*?)</b>", r"**\1**", text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(
+        r"<strong>(.*?)</strong>", r"**\1**", text, flags=re.IGNORECASE | re.DOTALL
+    )
+
+    # Convert italic tags to markdown
+    text = re.sub(r"<i>(.*?)</i>", r"*\1*", text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r"<em>(.*?)</em>", r"*\1*", text, flags=re.IGNORECASE | re.DOTALL)
+
+    # Convert line breaks and paragraph markers to newlines
+    # Handle consecutive tags by first normalizing, then collapsing
+    text = re.sub(r"<br\s*/?>", "\n", text, flags=re.IGNORECASE)
+    text = re.sub(r"<p\s*/?>", "\n", text, flags=re.IGNORECASE)
+    text = re.sub(r"</p>", "\n", text, flags=re.IGNORECASE)
+
+    # Strip font color tags (keep content)
+    text = re.sub(r"<font[^>]*>(.*?)</font>", r"\1", text, flags=re.IGNORECASE | re.DOTALL)
+
+    # Strip remaining HTML tags
+    text = re.sub(r"<[^>]+>", "", text)
+
+    # Decode HTML entities
+    text = html.unescape(text)
+
+    # Collapse multiple consecutive newlines into single newline
+    text = re.sub(r"\n{2,}", "\n", text)
+
+    # Clean up whitespace
+    text = text.strip()
+
+    return text
+
+
+def _strip_html_for_conllu(text: str) -> str:
+    """
+    Strip HTML tags and convert line breaks to ;; for CoNLL-U format.
+
+    Parameters
+    ----------
+    text : str
+        Text potentially containing HTML tags
+
+    Returns
+    -------
+    str
+        Clean text suitable for CoNLL-U format
+    """
+    if not text:
+        return text
+
+    # Convert line breaks and paragraph markers to ;;
+    # First normalize all line break types
+    text = re.sub(r"(<br\s*/?>|<p\s*/?>|</p>)+", ";;", text, flags=re.IGNORECASE)
+
+    # Strip font color tags (keep content)
+    text = re.sub(r"<font[^>]*>(.*?)</font>", r"\1", text, flags=re.IGNORECASE | re.DOTALL)
+
+    # Strip all remaining HTML tags
+    text = re.sub(r"<[^>]+>", "", text)
+
+    # Decode HTML entities
+    text = html.unescape(text)
+
+    # Clean up multiple ;; into single ;;
+    text = re.sub(r"(;;)+", ";;", text)
+
+    # Remove tabs and newlines (not allowed in CoNLL-U fields)
+    text = text.replace("\t", " ").replace("\n", " ")
+
+    # Clean up whitespace
+    text = re.sub(r"\s+", " ", text).strip()
+
+    return text
 
 
 def format_markdown(analysis: TextAnalysis) -> str:
@@ -36,8 +131,12 @@ def format_markdown(analysis: TextAnalysis) -> str:
     - Errors: [list]
 
     ## Line 1
-    word1: definition
-    word2: definition
+    word1:
+    Lemma(s):
+    lemma1
+    Definition(s):
+    definition1;
+    definition2
 
     ## Line 2
     ...
@@ -67,11 +166,44 @@ def format_markdown(analysis: TextAnalysis) -> str:
         lines.append("")
 
         for word_def in line_analysis.words:
-            # Format definitions
-            defs = "; ".join(word_def.definitions)
-            lines.append(f"{word_def.word}: {defs}")
+            # Word on its own line followed by colon
+            lines.append(f"{word_def.word}:")
 
-        lines.append("")
+            # Add lemmas if available
+            lemmas = []
+            if word_def.grammatical_info:
+                if "lemma" in word_def.grammatical_info:
+                    lemma_val = word_def.grammatical_info["lemma"]
+                    if isinstance(lemma_val, list):
+                        lemmas.extend(lemma_val)
+                    else:
+                        lemmas.append(lemma_val)
+                if "lemmas" in word_def.grammatical_info:
+                    lemma_val = word_def.grammatical_info["lemmas"]
+                    if isinstance(lemma_val, list):
+                        lemmas.extend(lemma_val)
+                    else:
+                        lemmas.append(lemma_val)
+
+            if lemmas:
+                lines.append("Lemma(s):")
+                for lemma in lemmas:
+                    cleaned_lemma = _convert_html_to_markdown(str(lemma))
+                    lines.append(cleaned_lemma)
+
+            # Definitions
+            lines.append("Definition(s):")
+            for definition in word_def.definitions:
+                # Convert HTML to markdown and clean up
+                cleaned_def = _convert_html_to_markdown(definition)
+                # Replace any newlines within the definition with space
+                # to avoid blank lines in the definition section
+                cleaned_def = re.sub(r"\n+", " ", cleaned_def)
+                # Add semicolon after each definition
+                lines.append(f"{cleaned_def};")
+
+            # Blank line before next word (not after last word in line)
+            lines.append("")
 
     return "\n".join(lines)
 
@@ -178,7 +310,7 @@ def format_conllu(analysis: TextAnalysis) -> str:
     Each word is on a line with tab-separated fields:
     1. ID: Word index
     2. FORM: Word form
-    3. LEMMA: Lemma (base form)
+    3. LEMMA: Lemma (base form) - comma-separated if multiple
     4. UPOS: Universal POS tag
     5. XPOS: Language-specific POS tag
     6. FEATS: Morphological features
@@ -187,8 +319,7 @@ def format_conllu(analysis: TextAnalysis) -> str:
     9. DEPS: Enhanced dependency graph
     10. MISC: Any other annotation
 
-    For now, we populate FORM and MISC (with definitions).
-    Other fields will be populated as grammar parsing is added.
+    Line breaks and HTML tags in definitions are converted to ;; or stripped.
     """
     lines = []
 
@@ -205,13 +336,40 @@ def format_conllu(analysis: TextAnalysis) -> str:
         # Add sentence ID comment
         lines.append(f"# sent_id = line_{line_analysis.line_number}")
 
+        # Add original text of the line
+        original_text = " ".join(word_def.word for word_def in line_analysis.words)
+        lines.append(f"# text = {original_text}")
+
         # Add each word
         word_id = 1
         for word_def in line_analysis.words:
             # Format: ID FORM LEMMA UPOS XPOS FEATS HEAD DEPREL DEPS MISC
-            # We only populate FORM and MISC for now
             form = word_def.word
-            lemma = "_"  # Unknown
+
+            # Extract lemmas from grammatical_info
+            lemmas = []
+            if word_def.grammatical_info:
+                if "lemma" in word_def.grammatical_info:
+                    lemma_val = word_def.grammatical_info["lemma"]
+                    if isinstance(lemma_val, list):
+                        lemmas.extend(lemma_val)
+                    else:
+                        lemmas.append(lemma_val)
+                if "lemmas" in word_def.grammatical_info:
+                    lemma_val = word_def.grammatical_info["lemmas"]
+                    if isinstance(lemma_val, list):
+                        lemmas.extend(lemma_val)
+                    else:
+                        lemmas.append(lemma_val)
+
+            # Format lemma column - comma-separated if multiple, underscore if none
+            if lemmas:
+                # Strip HTML from lemmas and join with comma
+                cleaned_lemmas = [_strip_html_for_conllu(str(l)) for l in lemmas]
+                lemma = ",".join(cleaned_lemmas)
+            else:
+                lemma = "_"
+
             upos = "_"  # Unknown
             xpos = "_"  # Unknown
             feats = "_"  # Unknown
@@ -219,10 +377,11 @@ def format_conllu(analysis: TextAnalysis) -> str:
             deprel = "_"  # Unknown
             deps = "_"  # Unknown
 
-            # Put definitions in MISC field
-            definitions_str = (
-                "|".join(word_def.definitions).replace("\t", " ").replace("\n", " ")
-            )
+            # Put definitions in MISC field - strip HTML and convert line breaks to ;;
+            cleaned_definitions = [
+                _strip_html_for_conllu(d) for d in word_def.definitions
+            ]
+            definitions_str = "|".join(cleaned_definitions)
             misc = f"Definitions={definitions_str}|SourceDict={word_def.source_dict}"
 
             # Create CoNLL-U line

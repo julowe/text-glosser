@@ -60,12 +60,16 @@ class ArabicProcessor(LanguageProcessor):
         Notes
         -----
         Lazily loads the lemmatizer to avoid import overhead if not used.
+        Configures the lemmatizer to return vocalized lemmas (with diacritics)
+        for better dictionary matching and display.
         """
         if self._lemmatizer is None:
             try:
                 import qalsadi.lemmatizer as qlemmatizer
 
                 self._lemmatizer = qlemmatizer.Lemmatizer()
+                # Enable vocalized lemma output (returns lemmas with diacritics)
+                self._lemmatizer.set_vocalized_lemma()
             except ImportError:
                 pass
         return self._lemmatizer
