@@ -5,6 +5,7 @@ This module processes text sources using selected dictionaries and resources
 to generate word-by-word analysis with definitions.
 """
 
+import unicodedata
 from datetime import datetime
 from typing import Any
 
@@ -145,6 +146,29 @@ class TextProcessor:
         """
         return "\u4e00" <= char <= "\u9fff"
 
+    def _is_word_char(self, char: str) -> bool:
+        """
+        Check if a character is a word character (letter or number).
+
+        Uses Unicode categories to properly identify letters and numbers
+        across all scripts (Arabic, Hebrew, Greek, Sanskrit, Latin, etc.).
+
+        Parameters
+        ----------
+        char : str
+            Character to check
+
+        Returns
+        -------
+        bool
+            True if character is a letter or number
+        """
+        category = unicodedata.category(char)
+        # L* = Letter (Lu, Ll, Lt, Lm, Lo)
+        # N* = Number (Nd, Nl, No)
+        # M* = Mark (Mn, Mc, Me) - combining marks for diacritics
+        return category[0] in ("L", "N", "M")
+
     def _tokenize(self, text: str) -> list[str]:
         """
         Tokenize text into words.
@@ -163,8 +187,12 @@ class TextProcessor:
         -----
         This tokenization handles Chinese characters individually while keeping
         other languages' words together. Chinese characters (CJK Unified Ideographs)
-        are treated as separate tokens, while other scripts are split on whitespace
-        and punctuation.
+        are treated as separate tokens, while other scripts (Arabic, Hebrew, Greek,
+        Sanskrit, Latin, etc.) are tokenized as words based on whitespace and
+        punctuation boundaries.
+
+        Uses Unicode character categories to properly identify word characters
+        across all scripts.
         """
         tokens = []
         i = 0
@@ -175,16 +203,16 @@ class TextProcessor:
             if self._is_chinese_char(char):
                 tokens.append(char)
                 i += 1
-            # If it's whitespace or punctuation, skip it
-            elif not char.isalnum():
+            # If it's not a word character (whitespace, punctuation, etc.), skip it
+            elif not self._is_word_char(char):
                 i += 1
-            # Otherwise, it's part of a non-Chinese word
+            # Otherwise, it's part of a word in any script
             else:
-                # Collect consecutive non-Chinese alphanumeric characters
+                # Collect consecutive word characters (including combining marks)
                 word = ""
                 while (
                     i < len(text)
-                    and text[i].isalnum()
+                    and self._is_word_char(text[i])
                     and not self._is_chinese_char(text[i])
                 ):
                     word += text[i]
