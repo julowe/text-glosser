@@ -230,11 +230,17 @@ def process(
             analysis = processor.analyze_text(src, list(resources))
 
             # Export based on format
-            base_filename = (
+            # Build filename: inputname_RESOURCE-ID_..._DATETIME
+            from datetime import datetime
+
+            input_name = (
                 Path(src.name).stem
                 if src.source_type == "file"
                 else f"url_{src.id[:8]}"
             )
+            resource_suffix = "_".join(resources)
+            timestamp = datetime.now().strftime("%Y-%m-%dT%H%M")
+            base_filename = f"{input_name}_{resource_suffix}_{timestamp}"
 
             if output_format == "all":
                 file_paths = export_all_formats(

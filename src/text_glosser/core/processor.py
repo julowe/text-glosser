@@ -5,9 +5,12 @@ This module processes text sources using selected dictionaries and resources
 to generate word-by-word analysis with definitions.
 """
 
+import unicodedata
 from datetime import datetime
 from typing import Any
 
+from ..core.language_processors import LanguageProcessor
+from ..core.language_processors.arabic import ArabicProcessor
 from ..core.models import (
     DictionaryFormat,
     DictionaryResource,
@@ -46,6 +49,33 @@ class TextProcessor:
         """
         self.registry = registry
         self.parsers: dict[str, Any] = {}
+        self._language_processors: dict[str, LanguageProcessor] = {}
+
+    def _get_language_processor(self, language_code: str) -> LanguageProcessor | None:
+        """
+        Get or create a language processor for a specific language.
+
+        Parameters
+        ----------
+        language_code : str
+            ISO 639-1 language code
+
+        Returns
+        -------
+        LanguageProcessor | None
+            Language processor instance or None if not available
+        """
+        if language_code in self._language_processors:
+            return self._language_processors[language_code]
+
+        processor = None
+        if language_code == "ar":
+            processor = ArabicProcessor()
+
+        if processor:
+            self._language_processors[language_code] = processor
+
+        return processor
 
     def _get_parser(self, resource: DictionaryResource):
         """
@@ -116,6 +146,29 @@ class TextProcessor:
         """
         return "\u4e00" <= char <= "\u9fff"
 
+    def _is_word_char(self, char: str) -> bool:
+        """
+        Check if a character is a word character (letter or number).
+
+        Uses Unicode categories to properly identify letters and numbers
+        across all scripts (Arabic, Hebrew, Greek, Sanskrit, Latin, etc.).
+
+        Parameters
+        ----------
+        char : str
+            Character to check
+
+        Returns
+        -------
+        bool
+            True if character is a letter or number
+        """
+        category = unicodedata.category(char)
+        # L* = Letter (Lu, Ll, Lt, Lm, Lo)
+        # N* = Number (Nd, Nl, No)
+        # M* = Mark (Mn, Mc, Me) - combining marks for diacritics
+        return category[0] in ("L", "N", "M")
+
     def _tokenize(self, text: str) -> list[str]:
         """
         Tokenize text into words.
@@ -134,8 +187,12 @@ class TextProcessor:
         -----
         This tokenization handles Chinese characters individually while keeping
         other languages' words together. Chinese characters (CJK Unified Ideographs)
-        are treated as separate tokens, while other scripts are split on whitespace
-        and punctuation.
+        are treated as separate tokens, while other scripts (Arabic, Hebrew, Greek,
+        Sanskrit, Latin, etc.) are tokenized as words based on whitespace and
+        punctuation boundaries.
+
+        Uses Unicode character categories to properly identify word characters
+        across all scripts.
         """
         tokens = []
         i = 0
@@ -146,16 +203,16 @@ class TextProcessor:
             if self._is_chinese_char(char):
                 tokens.append(char)
                 i += 1
-            # If it's whitespace or punctuation, skip it
-            elif not char.isalnum():
+            # If it's not a word character (whitespace, punctuation, etc.), skip it
+            elif not self._is_word_char(char):
                 i += 1
-            # Otherwise, it's part of a non-Chinese word
+            # Otherwise, it's part of a word in any script
             else:
-                # Collect consecutive non-Chinese alphanumeric characters
+                # Collect consecutive word characters (including combining marks)
                 word = ""
                 while (
                     i < len(text)
-                    and text[i].isalnum()
+                    and self._is_word_char(text[i])
                     and not self._is_chinese_char(text[i])
                 ):
                     word += text[i]
@@ -165,9 +222,14 @@ class TextProcessor:
 
         return tokens
 
-    def _lookup_word(self, word: str, resource: DictionaryResource) -> list[str] | None:
+    def _lookup_word(
+        self, word: str, resource: DictionaryResource
+    ) -> dict[str, Any] | None:
         """
         Look up a word in a specific resource.
+
+        For Arabic resources, uses the Arabic language processor to try
+        multiple forms (original, normalized, lemmatized) for lookup.
 
         Parameters
         ----------
@@ -178,20 +240,63 @@ class TextProcessor:
 
         Returns
         -------
-        Optional[List[str]]
-            List of definitions, or None if not found
+        Optional[Dict[str, Any]]
+            Dictionary containing:
+            - 'definitions': List of definition strings
+            - 'grammatical_info': Dict with lemmas and other grammatical data
+            Or None if not found
         """
         parser = self._get_parser(resource)
         if not parser:
             return None
 
         definitions = []
+        grammatical_info: dict[str, Any] = {}
 
         if resource.format == DictionaryFormat.STARDICT:
             if hasattr(parser, "lookup"):
-                result = parser.lookup(word)
-                if result:
-                    definitions.append(result)
+                # For Arabic resources, try multiple forms of the word
+                if resource.primary_language == "ar":
+                    lang_processor = self._get_language_processor("ar")
+                    if lang_processor:
+                        # Get all forms to try (original, normalized, lemmas)
+                        lookup_forms = lang_processor.get_lookup_forms(word)
+
+                        # Store lemmas in grammatical_info
+                        # lookup_forms typically include: original, normalized, lemmas
+                        # We want to capture the lemmas specifically
+                        if hasattr(lang_processor, "lemmatize"):
+                            lemma = lang_processor.lemmatize(word)
+                            if lemma and lemma != word:
+                                grammatical_info["lemmas"] = [lemma]
+
+                        # Also store the normalized form if different
+                        if hasattr(lang_processor, "normalize"):
+                            normalized = lang_processor.normalize(word)
+                            if normalized and normalized != word:
+                                grammatical_info["normalized_form"] = normalized
+
+                        matched_form = None
+                        for form in lookup_forms:
+                            result = parser.lookup(form)
+                            if result:
+                                definitions.append(result)
+                                matched_form = form
+                                break  # Stop after first successful lookup
+
+                        # Record which form matched
+                        if matched_form and matched_form != word:
+                            grammatical_info["matched_form"] = matched_form
+                    else:
+                        # Fallback: direct lookup
+                        result = parser.lookup(word)
+                        if result:
+                            definitions.append(result)
+                else:
+                    # Non-Arabic: direct lookup
+                    result = parser.lookup(word)
+                    if result:
+                        definitions.append(result)
 
         elif resource.format == DictionaryFormat.HANZIPY:
             # Use hanzipy for Chinese characters
@@ -201,17 +306,19 @@ class TextProcessor:
                     # Get character information
                     for char in word:
                         if self._is_chinese_char(char):
-                            # char_decomp = hDecomposer.decompose(char)
-                            # char_definition = hDictionary.definition_lookup(char)
                             info = parser.definition_lookup(char)
-                            # info = parser.decompose(char)
                             if info:
                                 definition = f"Character: {char}, Decomposition: {info}"
                                 definitions.append(definition)
             except Exception as e:
                 print(f"Error using hanzipy: {e}")
 
-        return definitions if definitions else None
+        if definitions:
+            return {
+                "definitions": definitions,
+                "grammatical_info": grammatical_info if grammatical_info else None,
+            }
+        return None
 
     def analyze_text(
         self, source: TextSource, selected_resource_ids: list[str]
@@ -260,13 +367,14 @@ class TextProcessor:
                 found_definitions = False
 
                 for resource in resources:
-                    definitions = self._lookup_word(word, resource)
-                    if definitions:
+                    lookup_result = self._lookup_word(word, resource)
+                    if lookup_result:
                         word_defs.append(
                             WordDefinition(
                                 word=word,
-                                definitions=definitions,
+                                definitions=lookup_result["definitions"],
                                 source_dict=resource.id,
+                                grammatical_info=lookup_result.get("grammatical_info"),
                             )
                         )
                         found_definitions = True

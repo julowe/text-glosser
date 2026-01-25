@@ -84,6 +84,55 @@ class TestTextProcessor:
         tokens = processor._tokenize("   \n\t  ")
         assert tokens == []
 
+    def test_tokenize_hebrew_text(self, processor):
+        """Test that Hebrew text is tokenized as words."""
+        text = "שָׁלוֹם עוֹלָם"  # "Peace world" with vowel points
+        tokens = processor._tokenize(text)
+        # Hebrew should be tokenized as words, vowel points preserved
+        assert len(tokens) == 2
+
+    def test_tokenize_greek_text(self, processor):
+        """Test that Greek text is tokenized as words."""
+        text = "Ἐν ἀρχῇ ἦν ὁ λόγος"  # "In the beginning was the Word"
+        tokens = processor._tokenize(text)
+        # Greek should be tokenized as words
+        assert len(tokens) == 5
+        assert "Ἐν" in tokens
+        assert "λόγος" in tokens
+
+    def test_tokenize_sanskrit_devanagari(self, processor):
+        """Test that Sanskrit/Devanagari text is tokenized as words."""
+        text = "नमस्ते जगत्"  # "Greetings world"
+        tokens = processor._tokenize(text)
+        # Devanagari should be tokenized as words
+        assert len(tokens) == 2
+
+    def test_tokenize_latin_with_diacritics(self, processor):
+        """Test that Latin text with macrons is tokenized correctly."""
+        text = "Gallia omnis dīvīsa est"  # With macrons
+        tokens = processor._tokenize(text)
+        assert len(tokens) == 4
+        assert "dīvīsa" in tokens
+
+    def test_tokenize_arabic_with_diacritics(self, processor):
+        """Test Arabic text with tashkeel (vowel marks)."""
+        text = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ"  # Bismillah with full diacritics
+        tokens = processor._tokenize(text)
+        # Should be tokenized as 4 words, preserving diacritics
+        assert len(tokens) == 4
+
+    def test_tokenize_mixed_scripts(self, processor):
+        """Test tokenization of text with multiple scripts."""
+        text = "Hello שָׁלוֹם مرحبا 你好"
+        tokens = processor._tokenize(text)
+        # English, Hebrew, Arabic as words; Chinese as individual chars
+        assert "Hello" in tokens
+        assert "שָׁלוֹם" in tokens
+        assert "مرحبا" in tokens
+        assert "你" in tokens
+        assert "好" in tokens
+        assert len(tokens) == 5
+
     def test_analyze_text_with_chinese_characters(self, registry, processor):
         """Test full analysis with Chinese characters."""
         # Register a mock Chinese resource
