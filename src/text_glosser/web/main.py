@@ -524,6 +524,15 @@ def display_interactive_results(json_file: Path):
                                 word_label = ui.label(word_text)
                                 word_label.classes("font-bold text-lg mb-1")
 
+                                # Collect all dict_ids for this word
+                                word_dict_ids = [
+                                    entry.get("source_dict", "")
+                                    for entry in word_entries
+                                ]
+
+                                # Create containers for definitions
+                                def_containers = []
+
                                 # Definitions from each dictionary below
                                 for word_entry in word_entries:
                                     dict_id = word_entry.get("source_dict", "")
@@ -536,6 +545,7 @@ def display_interactive_results(json_file: Path):
                                     # Container for dictionary definitions
                                     def_container = ui.column()
                                     def_container.classes(f"dict-{dict_id} mb-1")
+                                    def_containers.append((dict_id, def_container))
 
                                     with def_container:
                                         # Dictionary name (small)
@@ -561,6 +571,47 @@ def display_interactive_results(json_file: Path):
                                         def_container.bind_visibility_from(
                                             checkbox, "value"
                                         )
+
+                                # Add "No results" message
+                                no_results_msg = ui.label(
+                                    "No results from selected resources"
+                                )
+                                no_results_msg.classes(
+                                    "text-sm text-gray-500 italic mt-1"
+                                )
+
+                                # Create update function with proper closure
+                                def make_update_visibility(
+                                    msg, dict_ids, checkbox_dict
+                                ):
+                                    """
+                                    Create visibility update function.
+
+                                    Properly captures closure variables.
+                                    """
+
+                                    def update():
+                                        # Check if any checkbox is checked
+                                        any_checked = any(
+                                            checkbox_dict[did].value
+                                            for did in dict_ids
+                                            if did in checkbox_dict
+                                        )
+                                        msg.set_visibility(not any_checked)
+
+                                    return update
+
+                                update_func = make_update_visibility(
+                                    no_results_msg, word_dict_ids, checkboxes
+                                )
+
+                                # Bind to all relevant checkboxes
+                                for dict_id in word_dict_ids:
+                                    if dict_id in checkboxes:
+                                        checkboxes[dict_id].on_value_change(update_func)
+
+                                # Initialize visibility
+                                update_func()
 
 
 @ui.page("/")
