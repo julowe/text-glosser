@@ -37,6 +37,7 @@ dependencies = [
     "hanzipy>=0.1.1",
     "pyarabic>=0.6.15",
     "qalsadi>=0.5.1",
+    "camel-tools>=1.5.2",
     "conllu>=4.5.0",
 ]
 

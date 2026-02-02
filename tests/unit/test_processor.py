@@ -164,3 +164,115 @@ class TestTextProcessor:
             assert any(
                 wd.word == "五" for line in analysis.lines for wd in line.words
             ) or any("五" in err for err in analysis.errors)
+
+
+class TestCamelToolsIntegration:
+    """Tests for CAMeL Tools processor integration."""
+
+    @pytest.fixture
+    def registry(self):
+        """Create a test registry with CAMeL Tools."""
+        return ResourceRegistry(resources_dir="/tmp/test_resources")
+
+    @pytest.fixture
+    def processor(self, registry):
+        """Create a test processor."""
+        return TextProcessor(registry)
+
+    def test_camel_tools_resource_registered(self, registry):
+        """Test that CAMeL Tools is registered in the registry."""
+        resource = registry.get_resource("camel-tools-arabic")
+        assert resource is not None
+        assert resource.name == "CAMeL Tools - Arabic Morphological Analyzer"
+        assert resource.resource_type == ResourceType.GRAMMAR_TOOL
+        assert resource.primary_language == "ar"
+
+    def test_get_parser_creates_camel_tools_analyzer(self, processor, registry):
+        """Test that _get_parser creates a CamelToolsAnalyzer for camel-tools-arabic."""
+        resource = registry.get_resource("camel-tools-arabic")
+        assert resource is not None
+
+        # Get the parser (analyzer)
+        parser = processor._get_parser(resource)
+
+        # Parser should be a CamelToolsAnalyzer instance
+        from text_glosser.core.language_processors.camel_analyzer import (
+            CamelToolsAnalyzer,
+        )
+
+        assert isinstance(parser, CamelToolsAnalyzer)
+
+    def test_lookup_word_with_camel_tools_fallback(self, processor, registry):
+        """Test that _lookup_word works with CAMeL Tools in fallback mode."""
+        from unittest.mock import MagicMock, patch
+
+        from text_glosser.core.language_processors.base import TokenSegment
+
+        resource = registry.get_resource("camel-tools-arabic")
+        assert resource is not None
+
+        # Create a mock analyzer that returns fallback (word analysis unavailable)
+        mock_analyzer = MagicMock()
+        mock_analyzer.analyze_word.return_value = [
+            TokenSegment(
+                segment_text="كتاب",
+                lemma="كتاب",
+                root="",
+                pos="UNKNOWN",
+                gloss="",
+            )
+        ]
+
+        # Patch the parser
+        processor.parsers["camel-tools-arabic"] = mock_analyzer
+
+        result = processor._lookup_word("كتاب", resource)
+
+        # Should get a result with morphological analysis
+        assert result is not None
+        assert "definitions" in result
+        assert len(result["definitions"]) > 0
+        assert "Morphological Analysis" in result["definitions"][0]
+
+    def test_lookup_word_with_camel_tools_segments(self, processor, registry):
+        """Test that _lookup_word correctly parses CAMeL Tools segments."""
+        from unittest.mock import MagicMock
+
+        from text_glosser.core.language_processors.base import TokenSegment
+
+        resource = registry.get_resource("camel-tools-arabic")
+        assert resource is not None
+
+        # Create a mock analyzer that returns proper segmentation
+        mock_analyzer = MagicMock()
+        mock_analyzer.analyze_word.return_value = [
+            TokenSegment(
+                segment_text="و",
+                lemma="و",
+                root="",
+                pos="CONJ",
+                gloss="and",
+            ),
+            TokenSegment(
+                segment_text="كتاب",
+                lemma="كتاب",
+                root="ك.ت.ب",
+                pos="NOUN",
+                gloss="",
+            ),
+        ]
+
+        # Patch the parser
+        processor.parsers["camel-tools-arabic"] = mock_analyzer
+
+        result = processor._lookup_word("وكتاب", resource)
+
+        # Should get a result with both segments
+        assert result is not None
+        assert "definitions" in result
+        assert len(result["definitions"]) > 0
+
+        # Check grammatical info contains segments
+        assert result.get("grammatical_info") is not None
+        assert "segments" in result["grammatical_info"]
+        assert len(result["grammatical_info"]["segments"]) == 2
