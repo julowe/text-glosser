@@ -73,11 +73,14 @@ def sanitize_session_id(session_id: str) -> str | None:
     --------
     >>> sanitize_session_id("abc123-def456")
     'abc123-def456'
+    >>> sanitize_session_id("abc123_def456")
+    'abc123_def456'
     >>> sanitize_session_id("../../../etc/passwd")
     None
     """
-    # Session IDs should be alphanumeric with optional hyphens
-    if not re.match(r"^[a-zA-Z0-9-]{8,64}$", session_id):
+    # Session IDs should be alphanumeric with optional hyphens and underscores
+    # This matches the format of secrets.token_urlsafe() output
+    if not re.match(r"^[a-zA-Z0-9_-]{8,64}$", session_id):
         return None
 
     return session_id

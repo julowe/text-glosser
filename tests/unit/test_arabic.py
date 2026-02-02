@@ -56,8 +56,7 @@ class TestArabicProcessor:
         # or أَكْتَبَ depending on the word form
         # Check that we got a result containing the root letters ك ت ب
         assert any(
-            "كتب" in lemma or "كَتَبَ" in lemma or "أَكْتَبَ" in lemma
-            for lemma in lemmas
+            "كتب" in lemma or "كَتَبَ" in lemma or "أَكْتَبَ" in lemma for lemma in lemmas
         )
 
     def test_lemmatize_noun_form(self, processor):
@@ -125,11 +124,14 @@ class TestArabicProcessor:
         # Should include normalized form (without diacritics)
         assert "يكتبون" in forms
         # Should include a lemma (may be vocalized like كَتَبَ)
-        assert any(
-            "كتب" in form or "كَتَبَ" in form or "أَكْتَبَ" in form
-            for form in forms
-            if form not in [word_with_diacritics, "يكتبون"]
-        ) or len(forms) >= 2
+        assert (
+            any(
+                "كتب" in form or "كَتَبَ" in form or "أَكْتَبَ" in form
+                for form in forms
+                if form not in [word_with_diacritics, "يكتبون"]
+            )
+            or len(forms) >= 2
+        )
 
     def test_language_code(self, processor):
         """Test that language code is set correctly."""

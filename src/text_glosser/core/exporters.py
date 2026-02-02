@@ -369,9 +369,7 @@ def format_conllu(analysis: TextAnalysis) -> str:
             # Format lemma column - comma-separated if multiple, underscore if none
             if lemmas:
                 # Strip HTML from lemmas and join with comma
-                cleaned_lemmas = [
-                    _strip_html_for_conllu(str(lem)) for lem in lemmas
-                ]
+                cleaned_lemmas = [_strip_html_for_conllu(str(lem)) for lem in lemmas]
                 lemma = ",".join(cleaned_lemmas)
             else:
                 lemma = "_"

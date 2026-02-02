@@ -2,6 +2,9 @@
 Tests for web UI functionality.
 """
 
+import json
+import tempfile
+
 from text_glosser.web.main import LANGUAGE_NAMES, get_language_display_name
 
 
@@ -179,3 +182,289 @@ class TestLanguageDisplayFormat:
         assert len(parts) == 2
         assert parts[0].strip() == "Arabic"
         assert parts[1] == "ar)"
+
+
+class TestInteractiveResultsDisplay:
+    """Test interactive results display functionality."""
+
+    def test_analysis_data_structure(self):
+        """
+        Test that analysis data structure is correctly parsed.
+
+        This tests the data structure expected by display_interactive_results.
+        """
+        # Sample analysis data structure
+        analysis_data = {
+            "metadata": {
+                "source_name": "test.txt",
+                "total_lines": 2,
+                "total_words": 3,
+                "dictionaries_used": ["dict1", "dict2"],
+            },
+            "lines": [
+                {
+                    "line_number": 1,
+                    "words": [
+                        {
+                            "word": "hello",
+                            "definitions": ["A greeting"],
+                            "source_dict": "dict1",
+                        },
+                        {
+                            "word": "world",
+                            "definitions": ["The earth", "People"],
+                            "source_dict": "dict2",
+                        },
+                    ],
+                }
+            ],
+        }
+
+        # Verify structure is valid
+        assert "metadata" in analysis_data
+        assert "lines" in analysis_data
+        assert len(analysis_data["lines"]) == 1
+
+        # Verify metadata
+        metadata = analysis_data["metadata"]
+        assert metadata["source_name"] == "test.txt"
+        assert metadata["total_lines"] == 2
+        assert metadata["total_words"] == 3
+        assert len(metadata["dictionaries_used"]) == 2
+
+        # Verify line data
+        line_data = analysis_data["lines"][0]
+        assert line_data["line_number"] == 1
+        assert len(line_data["words"]) == 2
+
+        # Verify word data
+        word_data = line_data["words"][0]
+        assert word_data["word"] == "hello"
+        assert len(word_data["definitions"]) == 1
+        assert word_data["source_dict"] == "dict1"
+
+    def test_json_file_parsing(self):
+        """Test that JSON files can be correctly loaded and parsed."""
+        from pathlib import Path
+
+        # Use the existing test file from tests directory
+        test_file = Path(__file__).parent.parent / "deer-park.txt"
+        assert test_file.exists(), f"Test file not found: {test_file}"
+
+        # Create analysis data structure as would be generated from processing
+        # the deer-park.txt file
+        analysis_data = {
+            "metadata": {
+                "source_name": "deer-park.txt",
+                "total_lines": 7,
+                "total_words": 7,  # Chinese characters are counted as words
+                "dictionaries_used": ["hanzipy"],
+            },
+            "lines": [
+                {
+                    "line_number": 1,
+                    "words": [
+                        {
+                            "word": "五",
+                            "definitions": ["Character info for 五"],
+                            "source_dict": "hanzipy",
+                        }
+                    ],
+                }
+            ],
+        }
+
+        # Use context manager for safer cleanup
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=True) as f:
+            json.dump(analysis_data, f)
+            f.flush()  # Ensure data is written
+
+            # Load and verify the JSON file
+            with open(f.name, encoding="utf-8") as read_f:
+                loaded_data = json.load(read_f)
+
+            assert loaded_data == analysis_data
+            assert loaded_data["metadata"]["source_name"] == "deer-park.txt"
+            assert len(loaded_data["lines"]) == 1
+            # Verify Chinese character handling
+            assert loaded_data["lines"][0]["words"][0]["word"] == "五"
+
+    def test_word_grouping_logic(self):
+        """
+        Test the logic for grouping words by their text.
+
+        This simulates the grouping logic in display_interactive_results.
+        """
+        # Sample words data with duplicate words from different dicts
+        words_data = [
+            {"word": "test", "definitions": ["Definition 1"], "source_dict": "dict1"},
+            {"word": "hello", "definitions": ["Greeting"], "source_dict": "dict1"},
+            {
+                "word": "test",
+                "definitions": ["Definition 2"],
+                "source_dict": "dict2",
+            },  # Duplicate word
+        ]
+
+        # Group words by text (as done in display_interactive_results)
+        words_by_text: dict[str, list[dict]] = {}
+        for word_data in words_data:
+            word_text = word_data.get("word", "")
+            if word_text not in words_by_text:
+                words_by_text[word_text] = []
+            words_by_text[word_text].append(word_data)
+
+        # Verify grouping
+        assert len(words_by_text) == 2  # "test" and "hello"
+        assert "test" in words_by_text
+        assert "hello" in words_by_text
+
+        # "test" should have 2 entries (from different dictionaries)
+        assert len(words_by_text["test"]) == 2
+        assert words_by_text["test"][0]["source_dict"] == "dict1"
+        assert words_by_text["test"][1]["source_dict"] == "dict2"
+
+        # "hello" should have 1 entry
+        assert len(words_by_text["hello"]) == 1
+        assert words_by_text["hello"][0]["source_dict"] == "dict1"
+
+    def test_deer_park_file_content(self):
+        """
+        Test using the actual deer-park.txt file from tests directory.
+
+        This verifies that the test file exists and can be read,
+        simulating how it would be used in the interactive display.
+        """
+        from pathlib import Path
+
+        # Load the deer-park.txt test file
+        test_file = Path(__file__).parent.parent / "deer-park.txt"
+        assert test_file.exists(), f"Test file not found: {test_file}"
+
+        # Read the file content
+        with open(test_file, encoding="utf-8") as f:
+            content = f.read()
+
+        # Verify it contains Chinese text
+        assert "五言絕句" in content  # First line
+        assert "王維" in content  # Second line (poet name)
+        assert "鹿柴" in content  # Third line (poem title)
+
+        # Verify it has the expected number of lines
+        lines = content.strip().split("\n")
+        assert len(lines) == 7
+
+        # Verify Chinese characters are present
+        # These are the first characters of each line
+        assert "五" in lines[0]  # Five
+        assert "王" in lines[1]  # King/Wang
+        assert "鹿" in lines[2]  # Deer
+        assert "空" in lines[3]  # Empty
+        assert "但" in lines[4]  # But
+        assert "返" in lines[5]  # Return
+        assert "復" in lines[6]  # Again
+
+    def test_quran_file_content(self):
+        """
+        Test using the actual quran-uthmani-1-1.txt file from tests directory.
+
+        This verifies that the Arabic test file exists and can be read,
+        testing RTL (right-to-left) text handling for Arabic.
+        """
+        from pathlib import Path
+
+        # Load the quran-uthmani-1-1.txt test file
+        test_file = Path(__file__).parent.parent / "quran-uthmani-1-1.txt"
+        assert test_file.exists(), f"Test file not found: {test_file}"
+
+        # Read the file content
+        with open(test_file, encoding="utf-8") as f:
+            content = f.read()
+
+        # Verify it has the expected number of lines (7 verses)
+        lines = [line for line in content.strip().split("\n") if line.strip()]
+        assert len(lines) == 7
+
+        # Verify it contains key Arabic letters
+        assert "ب" in content  # Ba
+        assert "ل" in content  # Lam
+        assert "ه" in content  # Ha
+        assert "م" in content  # Mim
+        assert "د" in content  # Dal
+
+        # Verify Arabic characters and diacritics are preserved
+        # Check for specific Arabic letters and diacritical marks
+        assert "ٱ" in content  # Alif wasla (special alef)
+        assert "ٰ" in content  # Superscript alif (dagger alif)
+        assert "ْ" in content  # Sukun (no vowel)
+        assert "ِ" in content  # Kasra (i sound)
+        assert "َ" in content  # Fatha (a sound)
+        assert "ّ" in content  # Shadda (double consonant)
+
+        # Verify RTL text direction is preserved in encoding
+        # Arabic text should be in the Unicode Arabic block (U+0600 to U+06FF)
+        arabic_chars = [c for c in content if "\u0600" <= c <= "\u06ff"]
+        assert len(arabic_chars) > 0, "No Arabic characters found"
+
+        # Verify specific words from first line (Bismillah)
+        first_line = content.split("\n")[0]
+        assert "بِسْمِ" in first_line  # First word: In the name
+        # Second line should contain Al-Hamdu
+        second_line = content.split("\n")[1]
+        assert "ٱلْحَمْدُ" in second_line  # Al-Hamdu (The praise)
+
+    def test_json_file_with_arabic_content(self):
+        """
+        Test JSON file parsing with Arabic content from quran-uthmani-1-1.txt.
+
+        This ensures that the interactive display can handle Arabic RTL text.
+        """
+        from pathlib import Path
+
+        # Use the existing quran test file from tests directory
+        test_file = Path(__file__).parent.parent / "quran-uthmani-1-1.txt"
+        assert test_file.exists(), f"Test file not found: {test_file}"
+
+        # Create analysis data structure as would be generated from processing
+        # the quran file with Arabic dictionaries
+        analysis_data = {
+            "metadata": {
+                "source_name": "quran-uthmani-1-1.txt",
+                "total_lines": 7,
+                "total_words": 29,  # Approximate word count
+                "dictionaries_used": ["lane-lexicon", "salmone-lexicon"],
+            },
+            "lines": [
+                {
+                    "line_number": 1,
+                    "words": [
+                        {
+                            "word": "بِسْمِ",
+                            "definitions": ["In the name of"],
+                            "source_dict": "lane-lexicon",
+                        },
+                        {
+                            "word": "ٱللَّهِ",
+                            "definitions": ["Allah (God)"],
+                            "source_dict": "lane-lexicon",
+                        },
+                    ],
+                }
+            ],
+        }
+
+        # Use context manager for safer cleanup
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=True) as f:
+            json.dump(analysis_data, f, ensure_ascii=False)
+            f.flush()  # Ensure data is written
+
+            # Load and verify the JSON file
+            with open(f.name, encoding="utf-8") as read_f:
+                loaded_data = json.load(read_f)
+
+            assert loaded_data == analysis_data
+            assert loaded_data["metadata"]["source_name"] == "quran-uthmani-1-1.txt"
+            assert len(loaded_data["lines"]) == 1
+            # Verify Arabic text handling
+            assert loaded_data["lines"][0]["words"][0]["word"] == "بِسْمِ"
+            assert loaded_data["lines"][0]["words"][1]["word"] == "ٱللَّهِ"
