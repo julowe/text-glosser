@@ -11,10 +11,12 @@ from typing import Any
 
 from ..core.language_processors import LanguageProcessor
 from ..core.language_processors.arabic import ArabicProcessor
+from ..core.language_processors.camel_analyzer import CamelToolsAnalyzer
 from ..core.models import (
     DictionaryFormat,
     DictionaryResource,
     LineAnalysis,
+    ResourceType,
     TextAnalysis,
     TextSource,
     WordDefinition,
@@ -125,6 +127,17 @@ class TextProcessor:
 
             except ImportError:
                 print("hanzipy not available")
+                parser = None
+
+        elif (
+            resource.resource_type == ResourceType.GRAMMAR_TOOL
+            and resource.id == "camel-tools-arabic"
+        ):
+            # CAMeL Tools Arabic Morphological Analyzer
+            try:
+                parser = CamelToolsAnalyzer(auto_download=True)
+            except Exception as e:
+                print(f"Error loading CAMeL Tools: {e}")
                 parser = None
 
         self.parsers[resource.id] = parser
@@ -312,6 +325,58 @@ class TextProcessor:
                                 definitions.append(definition)
             except Exception as e:
                 print(f"Error using hanzipy: {e}")
+
+        elif (
+            resource.resource_type == ResourceType.GRAMMAR_TOOL
+            and resource.id == "camel-tools-arabic"
+        ):
+            # Use CAMeL Tools for Arabic morphological analysis
+            try:
+                if hasattr(parser, "analyze_word"):
+                    segments = parser.analyze_word(word)
+                    if segments:
+                        # Build definitions from morphological segments
+                        segment_info = []
+                        for seg in segments:
+                            seg_text = seg.segment_text
+                            seg_pos = seg.pos
+                            seg_lemma = seg.lemma
+                            seg_gloss = seg.gloss
+                            seg_root = seg.root
+
+                            info_parts = [f"{seg_text}"]
+                            if seg_pos and seg_pos != "UNKNOWN":
+                                info_parts.append(f"({seg_pos})")
+                            if seg_gloss:
+                                info_parts.append(f'"{seg_gloss}"')
+                            if seg_lemma and seg_lemma != seg_text:
+                                info_parts.append(f"[lemma: {seg_lemma}]")
+                            if seg_root:
+                                info_parts.append(f"[root: {seg_root}]")
+
+                            segment_info.append(" ".join(info_parts))
+
+                        if segment_info:
+                            # Create a definition string from the analysis
+                            definition = (
+                                f"Morphological Analysis: {' + '.join(segment_info)}"
+                            )
+                            definitions.append(definition)
+
+                            # Store detailed grammatical info
+                            grammatical_info["segments"] = [
+                                {
+                                    "text": s.segment_text,
+                                    "lemma": s.lemma,
+                                    "root": s.root,
+                                    "pos": s.pos,
+                                    "gloss": s.gloss,
+                                    "features": s.features,
+                                }
+                                for s in segments
+                            ]
+            except Exception as e:
+                print(f"Error using CAMeL Tools: {e}")
 
         if definitions:
             return {
