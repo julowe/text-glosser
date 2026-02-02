@@ -39,8 +39,22 @@ class TestSanitizeSessionId:
     """Tests for session ID validation."""
 
     def test_valid_session_id(self):
-        """Test valid session ID."""
+        """Test valid session ID with hyphens."""
         assert sanitize_session_id("abc123-def456-ghi789") == "abc123-def456-ghi789"
+
+    def test_valid_session_id_with_underscores(self):
+        """Test valid session ID with underscores (token_urlsafe format)."""
+        assert (
+            sanitize_session_id("T_Qy_8O2JMjtmw3KT8atKM3CvHutF0Ag0CuhNZFyj64")
+            == "T_Qy_8O2JMjtmw3KT8atKM3CvHutF0Ag0CuhNZFyj64"
+        )
+
+    def test_valid_session_id_mixed(self):
+        """Test valid session ID with both hyphens and underscores."""
+        assert (
+            sanitize_session_id("abc_123-def_456")
+            == "abc_123-def_456"
+        )
 
     def test_invalid_characters(self):
         """Test invalid characters."""
