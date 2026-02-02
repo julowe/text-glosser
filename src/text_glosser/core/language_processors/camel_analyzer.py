@@ -11,10 +11,17 @@ by the CAMELTOOLS_DATA environment variable.
 """
 
 import asyncio
+import logging
 import os
 from typing import Any
 
 from .base import MorphologicalAnalyzer, TokenSegment
+
+# Logger for this module
+_logger = logging.getLogger(__name__)
+
+# Package name for CAMeL Tools disambiguator data
+CAMEL_DISAMBIG_PACKAGE = "disambig-mle-calima-msa-r13"
 
 # CAMeL Tools POS tag mapping to standard tags
 CAMEL_POS_MAP = {
@@ -50,6 +57,7 @@ CAMEL_POS_MAP = {
     "punc": "PUNCT",
     "digit": "NUM",
     "foreign": "X",
+    "suffix": "PART",  # Map suffix to PART for consistency
 }
 
 # Gloss mapping for common prefixes/particles
@@ -141,7 +149,7 @@ def download_camel_data(progress_callback: Any = None) -> bool:
         # Get packages from catalogue
         for pkg_name in CATALOGUE.packages:
             # Download essential packages for morphological analysis
-            if "disambig-mle-calima-msa-r13" in pkg_name:
+            if CAMEL_DISAMBIG_PACKAGE in pkg_name:
                 packages_to_download.append(pkg_name)
 
         if not packages_to_download:
@@ -151,10 +159,9 @@ def download_camel_data(progress_callback: Any = None) -> bool:
 
             # Use download_all_datasets for essential data
             try:
-                downloader.download_package("disambig-mle-calima-msa-r13", data_dir)
-            except Exception:
-                # Try alternative approach
-                pass
+                downloader.download_package(CAMEL_DISAMBIG_PACKAGE, data_dir)
+            except Exception as e:
+                _logger.warning(f"Could not download {CAMEL_DISAMBIG_PACKAGE}: {e}")
 
         for pkg_name in packages_to_download:
             if progress_callback:
@@ -162,6 +169,7 @@ def download_camel_data(progress_callback: Any = None) -> bool:
             try:
                 downloader.download_package(pkg_name, data_dir)
             except Exception as e:
+                _logger.warning(f"Could not download {pkg_name}: {e}")
                 if progress_callback:
                     progress_callback(f"Warning: Could not download {pkg_name}: {e}")
 
@@ -248,6 +256,7 @@ class CamelToolsAnalyzer(MorphologicalAnalyzer):
         self._disambiguator: Any = None
         self._data_downloaded: bool = False
         self._auto_download = auto_download
+        self._init_error: str | None = None
 
     def _ensure_data(self, progress_callback: Any = None) -> bool:
         """
@@ -296,10 +305,12 @@ class CamelToolsAnalyzer(MorphologicalAnalyzer):
                 # Initialize the MLE disambiguator
                 self._disambiguator = MLEDisambiguator.pretrained()
 
-            except ImportError:
-                pass
-            except Exception:
-                pass
+            except ImportError as e:
+                _logger.warning(f"CAMeL Tools import failed: {e}")
+                self._init_error = str(e)
+            except Exception as e:
+                _logger.error(f"Failed to initialize CAMeL Tools disambiguator: {e}")
+                self._init_error = str(e)
 
         return self._disambiguator
 
@@ -559,7 +570,7 @@ class CamelToolsAnalyzer(MorphologicalAnalyzer):
                         segment_text=suffix_normalized,
                         lemma=suffix_normalized,
                         root="",
-                        pos="SUFFIX",
+                        pos="PART",  # Use PART for consistency with standard tags
                         gloss="",
                     )
                 )
