@@ -23,6 +23,10 @@ _logger = logging.getLogger(__name__)
 # Package name for CAMeL Tools disambiguator data
 CAMEL_DISAMBIG_PACKAGE = "disambig-mle-calima-msa-r13"
 
+# Morphology database path relative to CAMELTOOLS_DATA directory
+# This is the database required by the disambiguator
+CAMEL_MORPHOLOGY_DB_PATH = "data/morphology_db/calima-msa-r13/morphology.db"
+
 # CAMeL Tools POS tag mapping to standard tags
 CAMEL_POS_MAP = {
     "noun": "NOUN",
@@ -99,10 +103,7 @@ def _check_data_exists() -> bool:
     """
     data_dir = _get_data_dir()
     # Check for morphology database which is required for disambiguation
-    # Path: data/morphology_db/calima-msa-r13/morphology.db
-    morphology_db_path = os.path.join(
-        data_dir, "data", "morphology_db", "calima-msa-r13", "morphology.db"
-    )
+    morphology_db_path = os.path.join(data_dir, CAMEL_MORPHOLOGY_DB_PATH)
     return os.path.exists(morphology_db_path)
 
 
