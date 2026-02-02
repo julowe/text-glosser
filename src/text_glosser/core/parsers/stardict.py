@@ -306,4 +306,3 @@ def StarDictParser(ifo_path: str) -> StarDictParserProtocol:
         logger.warning(f"pystardict failed for {ifo_path}: {e}, using fallback parser")
 
     return FallbackStarDictParser(ifo_path)
-

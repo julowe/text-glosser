@@ -51,10 +51,7 @@ class TestSanitizeSessionId:
 
     def test_valid_session_id_mixed(self):
         """Test valid session ID with both hyphens and underscores."""
-        assert (
-            sanitize_session_id("abc_123-def_456")
-            == "abc_123-def_456"
-        )
+        assert sanitize_session_id("abc_123-def_456") == "abc_123-def_456"
 
     def test_invalid_characters(self):
         """Test invalid characters."""
