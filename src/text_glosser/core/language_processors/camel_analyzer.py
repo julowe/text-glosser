@@ -98,8 +98,11 @@ def _check_data_exists() -> bool:
         True if data exists, False otherwise
     """
     data_dir = _get_data_dir()
-    # Check for morphology database which is required
-    morphology_db_path = os.path.join(data_dir, "data", "disambig", "mle")
+    # Check for morphology database which is required for disambiguation
+    # Path: data/morphology_db/calima-msa-r13/morphology.db
+    morphology_db_path = os.path.join(
+        data_dir, "data", "morphology_db", "calima-msa-r13", "morphology.db"
+    )
     return os.path.exists(morphology_db_path)
 
 
@@ -107,9 +110,9 @@ def download_camel_data(progress_callback: Any = None) -> bool:
     """
     Download CAMeL Tools data package.
 
-    Downloads the 'light' data package which includes basic morphological
-    analysis capabilities. This is a blocking operation that may take
-    several minutes depending on network speed.
+    Downloads the required packages for morphological analysis.
+    This is a blocking operation that may take several minutes
+    depending on network speed.
 
     Parameters
     ----------
@@ -127,7 +130,7 @@ def download_camel_data(progress_callback: Any = None) -> bool:
     environment variable, or defaults to ~/.camel_tools.
     """
     try:
-        from camel_tools.data import CATALOGUE, downloader
+        from camel_tools.data import CATALOGUE
 
         data_dir = _get_data_dir()
 
@@ -139,39 +142,29 @@ def download_camel_data(progress_callback: Any = None) -> bool:
             progress_callback(f"Download location: {data_dir}")
             progress_callback("This may take several minutes...")
 
-        # Set the CAMELTOOLS_DATA environment variable for the downloader
+        # Set the CAMELTOOLS_DATA environment variable for camel-tools
         os.environ["CAMELTOOLS_DATA"] = data_dir
 
-        # Download the light package which includes essential data
-        # The 'light' package includes morphology-db-r13 and other essentials
-        packages_to_download = []
+        # Download the disambig-mle-calima-msa-r13 package which includes
+        # what we need for morphological analysis. This method is on CATALOGUE,
+        # not the downloader module.
+        if progress_callback:
+            progress_callback(f"Downloading {CAMEL_DISAMBIG_PACKAGE}...")
 
-        # Get packages from catalogue
-        for pkg_name in CATALOGUE.packages:
-            # Download essential packages for morphological analysis
-            if CAMEL_DISAMBIG_PACKAGE in pkg_name:
-                packages_to_download.append(pkg_name)
-
-        if not packages_to_download:
-            # Fallback: try to download default/light packages
+        try:
+            # CATALOGUE.download_package handles the download correctly
+            CATALOGUE.download_package(
+                CAMEL_DISAMBIG_PACKAGE,
+                recursive=True,  # Download dependencies too
+                force=False,  # Don't re-download if exists
+                print_status=True,  # Show progress
+            )
+        except Exception as e:
+            _logger.warning(f"Could not download {CAMEL_DISAMBIG_PACKAGE}: {e}")
             if progress_callback:
-                progress_callback("Downloading default disambiguation data...")
-
-            # Use download_all_datasets for essential data
-            try:
-                downloader.download_package(CAMEL_DISAMBIG_PACKAGE, data_dir)
-            except Exception as e:
-                _logger.warning(f"Could not download {CAMEL_DISAMBIG_PACKAGE}: {e}")
-
-        for pkg_name in packages_to_download:
-            if progress_callback:
-                progress_callback(f"Downloading {pkg_name}...")
-            try:
-                downloader.download_package(pkg_name, data_dir)
-            except Exception as e:
-                _logger.warning(f"Could not download {pkg_name}: {e}")
-                if progress_callback:
-                    progress_callback(f"Warning: Could not download {pkg_name}: {e}")
+                msg = f"Warning: Could not download {CAMEL_DISAMBIG_PACKAGE}: {e}"
+                progress_callback(msg)
+            return False
 
         if progress_callback:
             progress_callback("Download complete!")
