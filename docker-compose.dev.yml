@@ -14,9 +14,12 @@ services:
       - ./language_resources:/app/language_resources
       # Persistent storage for user data
       - text-glosser-dev-data:/app/data
+      # Persistent storage for CAMeL Tools data (downloaded on first use)
+      - camel-data-dev-volume:/app/camel_data
     environment:
       - PYTHONUNBUFFERED=1
       - DATA_DIR=/app/data
+      - CAMELTOOLS_DATA=/app/camel_data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health', timeout=5)"]
@@ -27,4 +30,6 @@ services:
 
 volumes:
   text-glosser-dev-data:
+    driver: local
+  camel-data-dev-volume:
     driver: local

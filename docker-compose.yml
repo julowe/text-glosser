@@ -9,9 +9,12 @@ services:
     volumes:
       # Persistent storage for user data
       - text-glosser-data:/app/data
+      # Persistent storage for CAMeL Tools data (downloaded on first use)
+      - camel-data-volume:/app/camel_data
     environment:
       - PYTHONUNBUFFERED=1
       - DATA_DIR=/app/data
+      - CAMELTOOLS_DATA=/app/camel_data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -22,4 +25,6 @@ services:
 
 volumes:
   text-glosser-data:
+    driver: local
+  camel-data-volume:
     driver: local

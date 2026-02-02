@@ -22,7 +22,7 @@ FROM python:3.12-slim
 
 # Create non-root user
 RUN useradd -m -u 1000 -s /bin/bash appuser && \
-    mkdir -p /app/data/sessions /app/data/user_resources && \
+    mkdir -p /app/data/sessions /app/data/user_resources /app/camel_data && \
     chown -R appuser:appuser /app
 
 # Set working directory
@@ -39,6 +39,7 @@ COPY --chown=appuser:appuser language_resources/ ./language_resources/
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app/src
 ENV PATH=/home/appuser/.local/bin:$PATH
+ENV CAMELTOOLS_DATA=/app/camel_data
 
 # Switch to non-root user
 USER appuser

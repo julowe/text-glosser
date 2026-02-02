@@ -115,6 +115,20 @@ class ResourceRegistry:
             )
         )
 
+        # CAMeL Tools Arabic Analyzer (on-demand data download)
+        self.register_resource(
+            DictionaryResource(
+                id="camel-tools-arabic",
+                name="CAMeL Tools - Arabic Morphological Analyzer",
+                format=DictionaryFormat.GENERAL,
+                resource_type=ResourceType.GRAMMAR_TOOL,
+                primary_language="ar",
+                secondary_languages=["en"],
+                is_user_provided=False,
+                source_url="https://github.com/CAMeL-Lab/camel_tools",
+            )
+        )
+
     def register_resource(self, resource: DictionaryResource):
         """
         Register a new resource.
