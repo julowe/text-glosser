@@ -6,6 +6,7 @@ This module provides the web interface for the text-glosser application.
 
 import json
 import shutil
+import unicodedata
 import uuid
 from functools import partial
 from pathlib import Path
@@ -515,8 +516,25 @@ def display_interactive_results(json_file: Path):
                             words_by_text[word_text] = []
                         words_by_text[word_text].append(word_data)
 
+                    # Detect if text is RTL (Arabic, Hebrew, etc.)
+                    # by checking the first word's Unicode bidirectional property
+                    is_rtl = False
+                    if words_by_text:
+                        first_word = next(iter(words_by_text.keys()))
+                        if first_word:
+                            for char in first_word:
+                                bidi_class = unicodedata.bidirectional(char)
+                                # AL = Arabic Letter, R = Right-to-Left
+                                if bidi_class in ("AL", "R"):
+                                    is_rtl = True
+                                    break
+
                     # Display words in a flex row
-                    with ui.row().classes("gap-6 flex-wrap"):
+                    # For RTL languages, reverse the order and set direction
+                    row_classes = "gap-6 flex-wrap"
+                    if is_rtl:
+                        row_classes += " flex-row-reverse"
+                    with ui.row().classes(row_classes):
                         for word_text, word_entries in words_by_text.items():
                             # Create a column for each word
                             with ui.column().classes("items-start"):
